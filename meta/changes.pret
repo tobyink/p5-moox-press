@@ -23,3 +23,11 @@
 		item "Set $VERSION and $AUTHORITY in generated packages."^^Addition;
 		item "Better handling of caller option."^^Change;
 	].
+
+`MooX-Press 0.005 cpan:TOBYINK`
+	issued  2019-10-24;
+	changeset [
+		item "Suppress loading MooX::TypeTiny if it's not needed."^^Change;
+		item "Fixes for undef type_library."^^Bugfix;
+		item "Bundle a simple example, HTTP::Tiny::Objects."^^Documentation;
+	].
