@@ -349,26 +349,34 @@ sub _make_package {
 			my ($attrname, $attrspec) = splice @attrs, 0, 2;
 			
 			my %spec_hints;
-			if ($attrname =~ /^(\$|\%|\@)(.+)$/) {
+			if ($attrname =~ /^(\+?)(\$|\%|\@)(.+)$/) {
 				require Types::Standard;
 				require Types::TypeTiny;
 				$spec_hints{isa} ||= {
 					'$' => ~(Types::Standard::ArrayRef()|Types::Standard::HashRef()),
 					'@' => Types::TypeTiny::ArrayLike(),
 					'%' => Types::TypeTiny::HashLike(),
-				}->{$1};
-				$attrname = $2;
+				}->{$2};
+				no warnings 'uninitialized';
+				$attrname = $1.$3; # allow plus before sigil
 			}
 			if ($attrname =~ /^(.+)\!$/) {
 				$spec_hints{required} = 1;
 				$attrname = $1;
 			}
 			
+			(my $buildername = "_build_$attrname") =~ s/\+//;
+			(my $clearername = ($attrname =~ /^_/ ? "_clear$attrname" : "clear_$attrname")) =~ s/\+//;
+			
 			my %spec =
-				ref($attrspec) eq 'CODE' ? (is => 'rw', lazy => 1, builder => "_build_$attrname", clearer => ($attrname =~ /^_/ ? "_clear$attrname" : "clear_$attrname")) :
+				ref($attrspec) eq 'CODE' ? (is => 'rw', lazy => 1, builder => $attrspec, clearer => $clearername) :
 				blessed($attrspec) && $attrspec->can('check') ? (is => 'rw', isa => $attrspec) :
 				$_expand_simple->($attrspec);
-			$builder->$method_installer($qname, { "_build_$attrname" => $attrspec });
+			if (ref $spec{builder} eq 'CODE') {
+				my $code = delete $spec{builder};
+				$spec{builder} = $buildername;
+				$builder->$method_installer($qname, { $buildername => $code });
+			}
 			
 			%spec = (%spec_hints, %spec);
 			$spec{is} ||= 'rw';
