@@ -19,7 +19,7 @@ my $_expand = sub {
 };
 
 my $_merge = sub {
-	map defined&&!ref ? $_ : $_expand->($_), @_;
+	map defined($_)&&!ref($_) ? $_ : $_expand->($_), @_;
 };
 
 my $_expand_simple = sub {
