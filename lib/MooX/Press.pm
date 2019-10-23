@@ -9,7 +9,7 @@ our $VERSION   = '0.003';
 
 use Exporter::Tiny qw(mkopt);
 use Scalar::Util qw(blessed);
-# also depends on Moo, Type::Tiny, and Module::Runtime
+use namespace::autoclean;
 
 my $_expand = sub {
 	return unless defined $_[0];

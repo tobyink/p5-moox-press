@@ -7,6 +7,7 @@
 	:runtime-requirement    [ :on "Exporter::Tiny 1.000000"^^:CpanId ];
 	:runtime-requirement    [ :on "Type::Tiny 1.004000"^^:CpanId ];
 	:runtime-requirement    [ :on "Module::Runtime"^^:CpanId ];
+	:runtime-requirement    [ :on "namespace::autoclean"^^:CpanId ];
 	:runtime-requirement    [ :on "Moo 1.006"^^:CpanId ];
 	:test-recommendation    [ :on "Moose 2.12"^^:CpanId ];
 	:test-recommendation    [ :on "Mouse"^^:CpanId ];
