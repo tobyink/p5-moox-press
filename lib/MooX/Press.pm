@@ -51,6 +51,8 @@ sub import {
 	$opts{prefix} = $caller unless exists $opts{prefix};
 	$opts{toolkit} ||= $ENV{'PERL_MOOX_PRESS_TOOLKIT'} || 'Moo';
 	$opts{caller}  ||= $caller;
+	$opts{version}   ||= $caller->VERSION;
+	$opts{authority} ||= do { no strict 'refs'; no warnings 'once'; ${"$caller\::AUTHORITY"} };
 	
 	# Sucks that we need to go through the lists thrice, but we really need to
 	# pre-build the type library so it can be used in `isa` for classes/roles.
@@ -62,7 +64,7 @@ sub import {
 	$opts{type_library} = $builder->qualify_name($opts{type_library}, $opts{prefix});
 	
 	if ($opts{type_library}) {
-		$builder->prepare_type_library($opts{type_library});
+		$builder->prepare_type_library($opts{type_library}, $opts{version}, $opts{authority});
 	}
 	
 	for my $role (@roles) {
@@ -120,7 +122,7 @@ sub croak {
 my $none;
 sub prepare_type_library {
 	my $builder = shift;
-	my ($lib) = @_;
+	my ($lib, $version, $authority) = @_;
 	my %types_hash;
 	require Type::Tiny::Role;
 	require Type::Tiny::Class;
@@ -150,8 +152,11 @@ sub prepare_type_library {
 		$types_hash{$kind}{$target};
 	};
 	no strict 'refs';
+	no warnings 'once';
 	*{"$lib\::_mooxpress_add_type"} = $adder;
 	*{"$lib\::get_type_for_package"} = $getter;
+	${"$lib\::VERSION"} = $version if defined $version;
+	${"$lib\::AUTHORITY"} = $authority if defined $authority;
 }
 
 sub make_type_for_role {
@@ -309,6 +314,14 @@ sub _make_package {
 			$_merge->(@opts{qw/extends/});
 		if (@isa) {
 			$builder->$method($qname, \@isa);
+		}
+	}
+
+	for my $var (qw/VERSION AUTHORITY/) {
+		if (defined $opts{lc $var}) {
+			no strict 'refs';
+			no warnings 'once';
+			${"$qname\::$var"} = $opts{lc $var};
 		}
 	}
 	
@@ -707,6 +720,17 @@ for classes, but see L</Role Options>.
 
 The strings "Moo", "Moose", or "Mouse" are accepted and instruct MooX::Press
 to use your favourite OO toolkit. "Moo" is the default.
+
+=item C<< version >> I<< (Num) >>
+
+This has nothing to do with the version of MooX::Press you are using.
+It sets the C<< our $VERSION >> variable for the classes and roles being
+generated.
+
+=item C<< authority >> I<< (Str) >>
+
+This sets the C<< our $AUTHORITY >> variable for the classes and roles being
+generated.
 
 =item C<< prefix >> I<< (Str|Undef) >>
 
@@ -1151,6 +1175,14 @@ C<< ABC::XYZ->new_foo_bar() >>, and a type constraint
 =item C<< toolkit >> I<< (Str) >>
 
 Override toolkit choice for this class and any child classes.
+
+=item C<< version >> I<< (Num) >>
+
+Override version number for this class and any child classes.
+
+=item C<< authority >> I<< (Str) >>
+
+Override authority for this class and any child classes.
 
 See L</Import Options>.
 

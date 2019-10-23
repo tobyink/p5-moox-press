@@ -43,6 +43,8 @@ sub does_ok {
 		prefix  => 'Local::MyApp',
 		factory_package => 'Local::Factories',
 		toolkit => 'Moo',
+		version => 1.2,
+		authority => 'cpan:TOBYINK',
 		role => [
 			'Livestock',
 			'Pet',
@@ -92,6 +94,13 @@ for my $class (qw/Animal Panda Cat Dog Cow Pig/) {
 	does_ok($obj, 'Local::MyApp::Livestock') if $class =~ /Cow|Pig/;
 	does_ok($obj, 'Local::MyApp::Milkable') if $class =~ /Cow/;
 }
+
+is($Local::MyApp::Cow::VERSION, 1.2);
+is(Local::MyApp::Cow->VERSION, 1.2);
+is($Local::MyApp::Cow::AUTHORITY,'cpan:TOBYINK');
+is($Local::MyApp::Types::VERSION, 1.2);
+is(Local::MyApp::Types->VERSION, 1.2);
+is($Local::MyApp::Types::AUTHORITY,'cpan:TOBYINK');
 
 my $d = Local::MyApp::Cow->new(name => 'Daisy');
 is($d->name, 'Daisy', '$d->name');
