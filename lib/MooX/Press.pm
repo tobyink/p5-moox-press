@@ -48,11 +48,14 @@ sub import {
 	my $builder = shift;
 	my $caller  = caller;
 	my %opts    = @_==1 ? $_expand->(shift) : @_;
-	$opts{prefix} = $caller unless exists $opts{prefix};
-	$opts{toolkit} ||= $ENV{'PERL_MOOX_PRESS_TOOLKIT'} || 'Moo';
 	$opts{caller}  ||= $caller;
-	$opts{version}   ||= $caller->VERSION;
-	$opts{authority} ||= do { no strict 'refs'; no warnings 'once'; ${"$caller\::AUTHORITY"} };
+	$opts{prefix} = $opts{caller} unless exists $opts{prefix};
+	$opts{toolkit} ||= $ENV{'PERL_MOOX_PRESS_TOOLKIT'} || 'Moo';
+	
+	$opts{version} = $opts{caller}->VERSION
+		unless exists $opts{version};
+	$opts{authority} = do { no strict 'refs'; no warnings 'once'; ${$opts{caller}."::AUTHORITY"} }
+		unless exists $opts{authority};
 	
 	# Sucks that we need to go through the lists thrice, but we really need to
 	# pre-build the type library so it can be used in `isa` for classes/roles.
@@ -731,6 +734,9 @@ generated.
 
 This sets the C<< our $AUTHORITY >> variable for the classes and roles being
 generated.
+
+C<version> and C<authority> will be copied from the caller if they are not set,
+but you can set them to undef explicitly if you want to avoid that.
 
 =item C<< prefix >> I<< (Str|Undef) >>
 
