@@ -1,6 +1,12 @@
 # This file acts as the project's changelog.
 
 `MooX-Press 0.001 cpan:TOBYINK`
-	issued  2019-10-22;
+	issued  2019-10-23;
 	label   "Initial release".
+
+`MooX-Press 0.002 cpan:TOBYINK`
+	issued  2019-10-23;
+	changeset [
+		item "Fix syntax for Perl < 5.22."^^Bugfix;
+	].
 

@@ -5,7 +5,7 @@ use warnings;
 package MooX::Press;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.001';
+our $VERSION   = '0.002';
 
 use Exporter::Tiny qw(mkopt);
 use Scalar::Util qw(blessed);
