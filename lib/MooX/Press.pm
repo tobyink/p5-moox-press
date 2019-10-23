@@ -477,8 +477,8 @@ sub make_attribute_moo {
 	if ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($class)) {
 		# no, I don't like this either
 		($Moo::Role::INFO{$class}{accessor_maker} ||= do {
-		  require Method::Generate::Accessor;
-		  Method::Generate::Accessor->new
+			require Method::Generate::Accessor;
+			Method::Generate::Accessor->new
 		})->generate_method($class, $attribute, $spec);
 		push @{$Moo::Role::INFO{$class}{attributes}||=[]}, $attribute, $spec;
 	}
