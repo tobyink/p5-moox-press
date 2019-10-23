@@ -10,3 +10,9 @@
 		item "Fix syntax for Perl < 5.22."^^Bugfix;
 	].
 
+`MooX-Press 0.003 cpan:TOBYINK`
+	issued  2019-10-23;
+	changeset [
+		item "Remove old test script from tarball."^^Packaging;
+	].
+
