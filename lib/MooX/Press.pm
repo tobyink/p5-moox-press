@@ -63,8 +63,10 @@ sub import {
 	my @roles   = @{ mkopt $opts{role} };
 	my @classes = @{ mkopt $opts{class} };
 	
-	$opts{type_library} = 'Types' unless exists $opts{type_library};
-	$opts{type_library} = $builder->qualify_name($opts{type_library}, $opts{prefix});
+	unless (exists $opts{type_library}) {
+		$opts{type_library} = 'Types';
+		$opts{type_library} = $builder->qualify_name($opts{type_library}, $opts{prefix});
+	}
 	
 	if ($opts{type_library}) {
 		$builder->prepare_type_library($opts{type_library}, $opts{version}, $opts{authority});
@@ -165,12 +167,14 @@ sub prepare_type_library {
 sub make_type_for_role {
 	my $builder = shift;
 	my ($name, %opts) = @_;
+	return unless $opts{'type_library'};
 	$builder->_make_type($name, %opts, is_role => 1);
 }
 
 sub make_type_for_class {
 	my $builder = shift;
 	my ($name, %opts) = @_;
+	return unless $opts{'type_library'};
 	$builder->_make_type($name, %opts, is_role => 0);
 }
 
@@ -302,7 +306,7 @@ sub _make_package {
 	}
 	else {
 		my $optthing = '';
-		if ($toolkit eq 'Moo' and eval { require MooX::TypeTiny; 1 }) {
+		if ($toolkit eq 'Moo' and $INC{'Type/Tiny.pm'} and eval { require MooX::TypeTiny; 1 }) {
 			$optthing = ' use MooX::TypeTiny;';
 		}
 		elsif ($toolkit eq 'Moose' and eval { require MooseX::XSAccessor; 1 }) {
