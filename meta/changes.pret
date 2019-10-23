@@ -16,3 +16,10 @@
 		item "Remove old test script from tarball."^^Packaging;
 	].
 
+`MooX-Press 0.004 cpan:TOBYINK`
+	issued  2019-10-23;
+	changeset [
+		item "Declare dependency on namespace::autoclean."^^Packaging;
+		item "Set $VERSION and $AUTHORITY in generated packages."^^Addition;
+		item "Better handling of caller option."^^Change;
+	].
