@@ -41,6 +41,7 @@ my @delete_keys = qw(
 	around
 	before
 	after
+	type_name
 );
 
 sub import {
