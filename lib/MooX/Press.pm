@@ -1148,12 +1148,12 @@ It allows subclasses to be nested as deep as you like:
   
   package main;
   my $uncle = MyApp->new_human(name => "Bob");
-  $uncle->isa('Human');      # true
-  $uncle->isa('Primate');    # true
-  $uncle->isa('Mammal');     # true
-  $uncle->isa('Animal');     # true
-  $uncle->isa('Bird');       # false
-  $uncle->can('lactate');    # eww, but true
+  $uncle->isa('MyApp::Human');    # true
+  $uncle->isa('MyApp::Primate');  # true
+  $uncle->isa('MyApp::Mammal');   # true
+  $uncle->isa('MyApp::Animal');   # true
+  $uncle->isa('MyApp::Bird');     # false
+  $uncle->can('lactate');         # eww, but true
 
 We just defined a nested heirarchy with ten classes there!
 
