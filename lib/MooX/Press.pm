@@ -504,19 +504,10 @@ sub _make_package {
 sub make_attribute_moo {
 	my $builder = shift;
 	my ($class, $attribute, $spec) = @_;
-	if ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($class)) {
-		# no, I don't like this either
-		($Moo::Role::INFO{$class}{accessor_maker} ||= do {
-			require Method::Generate::Accessor;
-			Method::Generate::Accessor->new
-		})->generate_method($class, $attribute, $spec);
-		push @{$Moo::Role::INFO{$class}{attributes}||=[]}, $attribute, $spec;
-	}
-	else {
-		'Moo'->_constructor_maker_for($class)->register_attribute_specs($attribute, $spec);
-		'Moo'->_accessor_maker_for($class)->generate_method($class, $attribute, $spec);
-	}
-	'Moo'->_maybe_reset_handlemoose($class);
+	my $tracker = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($class))
+		? $Moo::Role::INFO{$class}{exports}
+		: $Moo::MAKERS{$class}{exports};
+	$tracker->{has}->($attribute, %$spec);
 }
 
 sub make_attribute_moose {
@@ -536,8 +527,8 @@ sub make_attribute_mouse {
 sub extend_class_moo {
 	my $builder = shift;
 	my ($class, $isa) = @_;
-	'Moo'->_set_superclasses($class, @$isa);
-	'Moo'->_maybe_reset_handlemoose($class);
+	my $tracker = $Moo::MAKERS{$class}{exports};
+	$tracker->{extends}->(@$isa);
 }
 
 sub extend_class_moose {
@@ -557,9 +548,10 @@ sub extend_class_mouse {
 sub apply_roles_moo {
 	my $builder = shift;
 	my ($class, $roles) = @_;
-	require Moo::Role;
-	'Moo::Role'->apply_roles_to_package($class, @$roles);
-	'Moo'->_maybe_reset_handlemoose($class);
+	my $tracker = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($class))
+		? $Moo::Role::INFO{$class}{exports}
+		: $Moo::MAKERS{$class}{exports};
+	$tracker->{with}->(@$roles);
 }
 
 sub apply_roles_moose {
