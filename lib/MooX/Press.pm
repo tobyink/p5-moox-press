@@ -169,7 +169,7 @@ sub make_type_for_role {
 	my $builder = shift;
 	my ($name, %opts) = @_;
 	return unless $opts{'type_library'};
-	$builder->croak("Roles ($name) cannnot extend things") if $opts{extends}; 
+	$builder->croak("Roles ($name) cannnot extend things") if $opts{extends};
 	$builder->_make_type($name, %opts, is_role => 1);
 }
 
@@ -185,7 +185,7 @@ sub _make_type {
 	my ($name, %opts) = @_;
 	my @isa = map $builder->qualify_name($_, $opts{prefix}),
 		grep $_,
-		$_merge->(@opts{qw/extends/});	
+		$_merge->(@opts{qw/extends/});
 	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	
 	my $type_name = $opts{'type_name'} || $builder->type_name($qname, $opts{'prefix'});
@@ -227,7 +227,7 @@ sub _do_coercions {
 	
 	my @isa = map $builder->qualify_name($_, $opts{prefix}),
 		grep $_,
-		$_merge->(@opts{qw/extends/});	
+		$_merge->(@opts{qw/extends/});
 	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	
 	if ($opts{coerce}) {
@@ -299,7 +299,7 @@ sub _make_package {
 	
 	my @isa = map $builder->qualify_name($_, $opts{prefix}),
 		grep $_,
-		$_merge->(@opts{qw/extends/});		
+		$_merge->(@opts{qw/extends/});
 	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	
 	if (!exists $opts{factory}) {
