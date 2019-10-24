@@ -5,7 +5,7 @@ use warnings;
 package MooX::Press;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.005';
+our $VERSION   = '0.006';
 
 use Exporter::Tiny qw(mkopt);
 use Scalar::Util qw(blessed);
@@ -444,12 +444,6 @@ sub _make_package {
 				$spec{coerce} = 1;
 			}
 			
-#			if ($attrname eq 'owner') {
-#				use Data::Dumper;
-#				print Dumper(!!$spec{isa}->coercion->can_be_inlined);
-#				die;
-#			}
-			
 			$builder->$method($qname, $attrname, \%spec);
 		}
 	}
@@ -826,12 +820,14 @@ The following class options are supported.
 
 =over
 
-=item C<< extends >> I<< (Str) >>
+=item C<< extends >> I<< (Str|ArrayRef[Str]) >>
 
 The parent class for this class.
 
 The prefix is automatically added. Include a leading "::" if you
 don't want the prefix to be added.
+
+Multiple inheritance is supported.
 
 =item C<< with >> I<< (ArrayRef[Str]) >>
 
@@ -1160,9 +1156,10 @@ It allows subclasses to be nested as deep as you like:
 We just defined a nested heirarchy with ten classes there!
 
 Subclasses can be named with a leading "+" to tell them to use their parent
-class name as a prefix. So, in the examle above, if you'd called your
+class name as a prefix. So, in the example above, if you'd called your
 subclasses "+Mammal", "+Dog", etc, you'd end up with packages like
-"MyApp::Animal::Mammal::Dog".
+"MyApp::Animal::Mammal::Dog". (In cases of multiple inheritance, it uses
+C<< $ISA[0] >>.)
 
 =item C<< factory >> I<< (Str) >>
 

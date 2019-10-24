@@ -31,3 +31,12 @@
 		item "Fixes for undef type_library."^^Bugfix;
 		item "Bundle a simple example, HTTP::Tiny::Objects."^^Documentation;
 	].
+	
+`MooX-Press 0.006 cpan:TOBYINK`
+	issued  2019-10-24;
+	changeset [
+		item "Less hacky way of calling Moo's has, extends, and with functions."^^Change;
+		item "You can now add a '+' before a class name to indicate that it should be prefixed by the parent class name."^^Change;
+		item "Fix example in pod."^^Documentation;
+		item "Document that multiple inheritance is supported."^^Documentation;
+	].
