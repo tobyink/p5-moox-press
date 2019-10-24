@@ -102,7 +102,8 @@ sub import {
 
 sub qualify_name {
 	shift;
-	my ($name, $prefix) = @_;
+	my ($name, $prefix, $parent) = @_;
+	return join("::", $parent, $1) if (defined $parent and $name =~ /^\+(.+)/);
 	return $1 if $name =~ /^::(.+)$/;
 	$prefix ? join("::", $prefix, $name) : $name;
 }
@@ -168,6 +169,7 @@ sub make_type_for_role {
 	my $builder = shift;
 	my ($name, %opts) = @_;
 	return unless $opts{'type_library'};
+	$builder->croak("Roles ($name) cannnot extend things") if $opts{extends}; 
 	$builder->_make_type($name, %opts, is_role => 1);
 }
 
@@ -181,7 +183,10 @@ sub make_type_for_class {
 sub _make_type {
 	my $builder = shift;
 	my ($name, %opts) = @_;
-	my $qname = $builder->qualify_name($name, $opts{prefix});
+	my @isa = map $builder->qualify_name($_, $opts{prefix}),
+		grep $_,
+		$_merge->(@opts{qw/extends/});	
+	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	
 	my $type_name = $opts{'type_name'} || $builder->type_name($qname, $opts{'prefix'});
 	if ($opts{'type_library'}->can('_mooxpress_add_type')) {
@@ -219,7 +224,11 @@ sub do_coercions_for_class {
 sub _do_coercions {
 	my $builder = shift;
 	my ($name, %opts) = @_;
-	my $qname = $builder->qualify_name($name, $opts{prefix});
+	
+	my @isa = map $builder->qualify_name($_, $opts{prefix}),
+		grep $_,
+		$_merge->(@opts{qw/extends/});	
+	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	
 	if ($opts{coerce}) {
 		my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
@@ -287,7 +296,11 @@ sub make_class {
 sub _make_package {
 	my $builder = shift;
 	my ($name, %opts) = @_;
-	my $qname = $builder->qualify_name($name, $opts{prefix});
+	
+	my @isa = map $builder->qualify_name($_, $opts{prefix}),
+		grep $_,
+		$_merge->(@opts{qw/extends/});		
+	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	
 	if (!exists $opts{factory}) {
 		my $tn = $builder->type_name($qname, $opts{prefix});
@@ -316,9 +329,6 @@ sub _make_package {
 			or $builder->croak("Could not create package $qname: $@");
 	
 		my $method  = $opts{toolkit_extend_class} || ("extend_class_".lc $toolkit);
-		my @isa = map $builder->qualify_name($_, $opts{prefix}),
-			grep $_,
-			$_merge->(@opts{qw/extends/});
 		if (@isa) {
 			$builder->$method($qname, \@isa);
 		}
@@ -1157,6 +1167,11 @@ It allows subclasses to be nested as deep as you like:
 
 We just defined a nested heirarchy with ten classes there!
 
+Subclasses can be named with a leading "+" to tell them to use their parent
+class name as a prefix. So, in the examle above, if you'd called your
+subclasses "+Mammal", "+Dog", etc, you'd end up with packages like
+"MyApp::Animal::Mammal::Dog".
+
 =item C<< factory >> I<< (Str) >>
 
 This is the name for the method installed into the factory package.
@@ -1231,7 +1246,7 @@ exceptions:
 
 =item C<< extends >> I<< (Any) >>
 
-This option is silently ignored.
+This option is disallowed.
 
 =item C<< can >> I<< (HashRef[CodeRef]) >>
 
