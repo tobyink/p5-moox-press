@@ -39,4 +39,5 @@
 		item "You can now add a '+' before a class name to indicate that it should be prefixed by the parent class name."^^Change;
 		item "Fix example in pod."^^Documentation;
 		item "Document that multiple inheritance is supported."^^Documentation;
+		item "Throw an error if people try to use extends in roles."^^Change;
 	].
