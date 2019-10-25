@@ -495,13 +495,28 @@ sub _make_package {
 	return $qname;
 }
 
+my %_cached_moo_helper;
+sub _get_moo_helper {
+	my $builder = shift;
+	my ($package, $helpername) = @_;
+	return $_cached_moo_helper{"$package\::$helpername"}
+		if $_cached_moo_helper{"$package\::$helpername"};
+	my $tracker = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($package))
+		? $Moo::Role::INFO{$package}{exports}
+		: $Moo::MAKERS{$package}{exports};
+	if (ref $tracker) {
+		return ($_cached_moo_helper{"$package\::$helpername"} = $tracker->{$helpername});
+	}
+	# I hate this...
+	$_cached_moo_helper{"$package\::$helpername"} =
+		eval sprintf('do { package %s; use Moo; my $coderef = \&%s; no Moo; $coderef };', $package, $helpername);
+}
+
 sub make_attribute_moo {
 	my $builder = shift;
 	my ($class, $attribute, $spec) = @_;
-	my $tracker = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($class))
-		? $Moo::Role::INFO{$class}{exports}
-		: $Moo::MAKERS{$class}{exports};
-	$tracker->{has}->($attribute, %$spec);
+	my $helper = $builder->_get_moo_helper($class, 'has');
+	$helper->($attribute, %$spec);
 }
 
 sub make_attribute_moose {
@@ -521,8 +536,8 @@ sub make_attribute_mouse {
 sub extend_class_moo {
 	my $builder = shift;
 	my ($class, $isa) = @_;
-	my $tracker = $Moo::MAKERS{$class}{exports};
-	$tracker->{extends}->(@$isa);
+	my $helper = $builder->_get_moo_helper($class, 'extends');
+	$helper->(@$isa);
 }
 
 sub extend_class_moose {
@@ -542,10 +557,8 @@ sub extend_class_mouse {
 sub apply_roles_moo {
 	my $builder = shift;
 	my ($class, $roles) = @_;
-	my $tracker = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($class))
-		? $Moo::Role::INFO{$class}{exports}
-		: $Moo::MAKERS{$class}{exports};
-	$tracker->{with}->(@$roles);
+	my $helper = $builder->_get_moo_helper($class, 'with');
+	$helper->(@$roles);
 }
 
 sub apply_roles_moose {
