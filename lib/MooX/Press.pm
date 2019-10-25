@@ -501,6 +501,7 @@ sub _get_moo_helper {
 	my ($package, $helpername) = @_;
 	return $_cached_moo_helper{"$package\::$helpername"}
 		if $_cached_moo_helper{"$package\::$helpername"};
+	die unless $helpername =~ /^(has|with|extends|around|before|after)$/;
 	my $tracker = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($package))
 		? $Moo::Role::INFO{$package}{exports}
 		: $Moo::MAKERS{$package}{exports};
@@ -609,14 +610,8 @@ sub install_constants {
 sub modify_method_moo {
 	my $builder = shift;
 	my ($class, $modifier, $method_name, $coderef) = @_;
-	if ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($class)) {
-		push @{$Moo::Role::INFO{$class}{modifiers}||=[]}, [ $modifier, $method_name, $coderef ];
-		'Moo::Role'->_maybe_reset_handlemoose($class);
-	}
-	else {
-		require Class::Method::Modifiers;
-		Class::Method::Modifiers::install_modifier(@_);
-	}
+	my $helper = $builder->_get_moo_helper($class, $modifier);
+	$helper->($method_name, $coderef);
 }
 
 sub modify_method_moose {
