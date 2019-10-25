@@ -41,3 +41,9 @@
 		item "Document that multiple inheritance is supported."^^Documentation;
 		item "Throw an error if people try to use extends in roles."^^Change;
 	].
+
+`MooX-Press 0.007 cpan:TOBYINK`
+	issued  2019-10-25;
+	changeset [
+		item "Fixes for Moo 2.003_005 which changes how Moo's keyword subs are tracked."^^Bugfix;
+	].
