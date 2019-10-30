@@ -47,3 +47,10 @@
 	changeset [
 		item "Fixes for Moo 2.003_005 which changes how Moo's keyword subs are tracked."^^Bugfix;
 	].
+
+`MooX-Press 0.008 cpan:TOBYINK`
+	issued  2019-10-30;
+	changeset [
+		item "Give each class a FACTORY method to return the factory package name."^^Addition;
+		item "Give the factory package a type_library method to return the type library name."^^Addition;
+	].
