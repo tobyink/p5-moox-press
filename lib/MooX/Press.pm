@@ -1484,7 +1484,7 @@ Also, if you do something like:
 					},
 				},
 			},
-		]
+		],
 		class => [
 			'Leaf',
 			'Tree'  => { with => ['LeafGrower'] },
