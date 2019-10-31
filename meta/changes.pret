@@ -54,3 +54,9 @@
 		item "Give each class a FACTORY method to return the factory package name."^^Addition;
 		item "Give the factory package a type_library method to return the type library name."^^Addition;
 	].
+
+`MooX-Press 0.009 cpan:TOBYINK`
+	issued  2019-10-31;
+	changeset [
+		item "Fix tree/leaf example."^^Documentation;
+	].
