@@ -30,7 +30,7 @@ my @delete_keys = qw(
 my $_handle_list = sub {
 	my ($thing) = @_;
 	return ()
-		if is_Undef $thing;
+		unless defined $thing;
 	return %$thing
 		if is_HashRef $thing;
 	return @$thing
@@ -109,7 +109,6 @@ sub import {
 	}
 }
 
-# should document this some time
 sub munge_options {
 	my $builder = shift;
 	my ($opts) = @_;
@@ -120,7 +119,7 @@ sub munge_options {
 			if (ref $val) {
 				push @{ $opts->{class} ||= [] }, $pkg, $val;
 			}
-			elsif ($val eq 1) {
+			elsif ($val eq 1 or not defined $val) {
 				push @{ $opts->{class} ||= [] }, $pkg;
 			}
 			else {
@@ -133,7 +132,7 @@ sub munge_options {
 			if (ref $val) {
 				push @{ $opts->{role} ||= [] }, $pkg, $val;
 			}
-			elsif ($val eq 1) {
+			elsif ($val eq 1 or not defined $val) {
 				push @{ $opts->{role} ||= [] }, $pkg;
 			}
 			else {
@@ -152,7 +151,7 @@ sub munge_role_options {
 
 sub munge_class_options {
 	shift;
-	my ($roleopts, $opts) = @_;
+	my ($classopts, $opts) = @_;
 	return;
 }
 
@@ -894,6 +893,34 @@ idea.
 Only supported for Moose. Unnecessary for Moo anyway. Defaults to false.
 
 =back
+
+At this top level, a shortcut is available for the 'class' and 'role' keys.
+Rather than:
+
+  use MooX::Press (
+    role => [
+      'Quux',
+      'Quuux' => { ... },
+    ],
+    class => [
+      'Foo',
+      'Bar' => { ... },
+      'Baz' => { ... },
+    ],
+  );
+
+It is possible to write:
+
+  use MooX::Press (
+    'role:Quux'  => {},
+    'role:Quuux' => { ... },
+    'class:Foo'  => {},
+    'class:Bar'  => { ... },
+    'class:Baz'  => { ... },
+  );
+
+This saves a level of indentation. (C<< => undef >> or C<< => 1 >> are
+supported as synonyms for C<< => {} >>.)
 
 =head3 Class Options
 
