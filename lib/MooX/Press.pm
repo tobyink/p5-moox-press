@@ -77,17 +77,24 @@ sub import {
 	
 	if ($opts{type_library}) {
 		$builder->prepare_type_library($opts{type_library}, %opts);
-	}
 	
-	for my $role (@roles) {
-		my ($pkg_name, $pkg_opts) = @$role;
-		$builder->munge_role_options($pkg_opts, \%opts);
-		$builder->make_type_for_role($pkg_name, $pkg_opts->$_handle_list, %opts);
-	}
-	for my $class (@classes) {
-		my ($pkg_name, $pkg_opts) = @$class;
-		$builder->munge_class_options($pkg_opts, \%opts);
-		$builder->make_type_for_class($pkg_name, $pkg_opts->$_handle_list, %opts);
+		for my $role (@roles) {
+			my ($pkg_name, $pkg_opts) = @$role;
+			$builder->munge_role_options($pkg_opts, \%opts);
+			$builder->make_type_for_role($pkg_name, $pkg_opts->$_handle_list, %opts);
+		}
+		for my $class (@classes) {
+			my ($pkg_name, $pkg_opts) = @$class;
+			$builder->munge_class_options($pkg_opts, \%opts);
+			$builder->make_type_for_class($pkg_name, $pkg_opts->$_handle_list, %opts);
+		}
+	
+		require Type::Registry;
+		my $reg = 'Type::Registry'->for_class($opts{type_library});
+		$reg->add_types($_) for (
+			$opts{type_library},
+			qw( Types::Standard Types::Common::Numeric Types::Common::String Types::TypeTiny ),
+		);
 	}
 	
 	for my $role (@roles) {
@@ -493,6 +500,13 @@ sub _make_package {
 			}
 			if ($spec{enum}) {
 				$spec{isa} = Types::Standard::Enum()->of(@{delete $spec{enum}});
+			}
+			if (is_Object($spec{type}) and $spec{type}->can('check')) {
+				$spec{isa} = delete $spec{type};
+			}
+			elsif ($spec{type}) {
+				my $reg = 'Type::Registry'->for_class($opts{type_library});
+				$spec{isa} = $reg->lookup(delete $spec{type});
 			}
 			
 			if (ref $spec{isa} && !exists $spec{coerce} && $spec{isa}->has_coercion) {
@@ -1452,6 +1466,14 @@ C<< isa => "HashRef" >> doesn't mean what you think it means. It means
 an object blessed into the "YourApp::HashRef" class.
 
 Use blessed type constraint objects, such as those from L<Types::Standard>.
+
+=item C<< type >> I<< (Str) >>
+
+C<< type => "HashRef" >> does what you think  C<< isa => "HashRef" >> should
+do. More specifically it searches your type library, along with
+L<Types::Standard>, L<Types::Common::Numeric>, and L<Types::Common::String>
+to find the type constraint it thinks you wanted. It's smart enough to deal
+with parameterized types, unions, intersections, and complements.
 
 =item C<< coerce >> I<< (Bool) >>
 

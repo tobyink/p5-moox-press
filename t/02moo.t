@@ -60,7 +60,7 @@ sub does_ok {
 				has => [
 					'name!'  => Str,
 					'colour',
-					'age'    => Num,
+					'age'    => { type => 'PositiveOrZeroInt' },
 					'status' => { enum => ['alive', 'dead'], default => 'alive' },
 				],
 				coerce => [
