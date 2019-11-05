@@ -70,3 +70,10 @@
 		item "Allow coderefs to be used to modify multiple methods in before/after/around, like Moo does."^^Addition;
 		item "Top-level shortcuts for creating classes and roles."^^Addition;
 	].
+
+`MooX-Press 0.011 cpan:TOBYINK`
+	issued  2019-11-05;
+	label   "Treason";
+	changeset [
+		item "Support `type` in attribute specs."^^Addition;
+	].
