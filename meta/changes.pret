@@ -60,3 +60,13 @@
 	changeset [
 		item "Fix tree/leaf example."^^Documentation;
 	].
+
+`MooX-Press 0.010 cpan:TOBYINK`
+	issued  2019-11-05;
+	label   "Gunpowder";
+	changeset [
+		item "Internal cleanups."^^Change;
+		item "Fixes for methods being redefined in subclasses."^^Bugfix;
+		item "Allow coderefs to be used to modify multiple methods in before/after/around, like Moo does."^^Addition;
+		item "Top-level shortcuts for creating classes and roles."^^Addition;
+	].
