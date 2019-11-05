@@ -477,7 +477,6 @@ sub _make_package {
 						: undef;
 				};
 				$spec{isa} ||= do {
-					require Types::Standard;
 					Types::Standard::ConsumerOf()->of($target);
 				};
 			}
@@ -489,12 +488,10 @@ sub _make_package {
 						: undef;
 				};
 				$spec{isa} ||= do {
-					require Types::Standard;
 					Types::Standard::InstanceOf()->of($target);
 				};
 			}
 			if ($spec{enum}) {
-				require Types::Standard;
 				$spec{isa} = Types::Standard::Enum()->of(@{delete $spec{enum}});
 			}
 			
