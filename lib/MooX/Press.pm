@@ -540,17 +540,32 @@ sub _make_package {
 			Moose::Util::find_meta($qname)->make_immutable;
 		}
 		
-		if (defined $opts{'factory'}) {
-			if (defined $opts{'factory_package'} or not exists $opts{'factory_package'}) {
-				my $fpackage    = $opts{'factory_package'} || $opts{'caller'};
-				my $factoryname = $builder->qualify_name($opts{'factory'}, $fpackage);
-				eval "sub $factoryname { shift; '$qname'->new(\@_) }; 1"
-					or $builder->croak("Couldn't create factory $factoryname: $@");
-				eval "sub $qname\::FACTORY { '$fpackage' }; 1"
-					or $builder->croak("Couldn't create factory $qname\::FACTORY: $@");
+		if (defined $opts{'factory_package'} or not exists $opts{'factory_package'}) {
+			my $fpackage = $opts{'factory_package'} || $opts{'caller'};
+			if ($opts{'factory'}) {
+				my @methods = $opts{'factory'}->$_handle_list;
+				while (@methods) {
+					my @method_names;
+					push(@method_names, shift @methods)
+						while (@methods and not ref $methods[0]);
+					my $coderef = shift(@methods) || \"new";
+					for my $name (@method_names) {
+						if (is_CodeRef $coderef) {
+							eval "package $fpackage; sub $name :method { splice(\@_, 1, 0, '$qname'); goto \$coderef }; 1"
+								or $builder->croak("Could not create factory $name in $fpackage: $@");
+						}
+						else {
+							my $target = $$coderef;
+							eval "package $fpackage; sub $name :method { shift; '$qname'->$target\(\@_) }; 1"
+								or $builder->croak("Couldn't create factory $name in $fpackage: $@");
+						}
+					}
+				}
 			}
+			eval "sub $qname\::FACTORY { '$fpackage' }; 1"
+				or $builder->croak("Couldn't create link back to factory $qname\::FACTORY: $@");
 		}
-		
+
 		if (defined $opts{'subclass'}) {
 			my @subclasses = $opts{'subclass'}->$_handle_list_add_nulls;
 			while (@subclasses) {
@@ -1299,7 +1314,7 @@ subclasses "+Mammal", "+Dog", etc, you'd end up with packages like
 "MyApp::Animal::Mammal::Dog". (In cases of multiple inheritance, it uses
 C<< $ISA[0] >>.)
 
-=item C<< factory >> I<< (Str) >>
+=item C<< factory >> I<< (Str|ArrayRef|Undef) >>
 
 This is the name for the method installed into the factory package.
 So for class "Cat", it might be "new_cat".
@@ -1308,6 +1323,29 @@ The default is the class name (excluding the prefix), lowercased,
 with double colons replaced by single underscores, and
 with "new_" added in front. To suppress the creation
 of this method, set C<factory> to an explicit undef.
+
+If set to an arrayref, it indicates you wish to create multiple
+methods in the factory package to make objects of this class.
+
+  factory => [
+    "grow_pig"                         => \"new_from_embryo",
+    "new_pork", "new_bacon", "new_ham" => sub { ... },
+    "new_pig", "new_swine",
+  ],
+
+A scalarref indicates the name of a constructor and that the
+methods before are shortcuts for that constructor. So
+C<< MyApp->grow_pig(@args) >> is a shortcut for
+C<< MyApp::Pig->new_from_embryo(@args) >>.
+
+A coderef will have a custom method installed into the factory package
+so that C<< MyApp->new_pork(@args) >> will act as a shortcut for:
+C<< $coderef->("MyApp", "MyApp::Pig", @args) >>. Note that C<new_bacon>
+and C<new_ham> are just aliases for C<new_bacon>.
+
+The C<new_pig> and C<new_swine> method names are followed by
+neither a coderef nor a scalarref, so are treated as if they had
+been followed by C<< \"new" >>.
 
 =item C<< type_name >> I<< (Str) >>
 

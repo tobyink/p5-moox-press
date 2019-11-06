@@ -74,7 +74,14 @@ sub does_ok {
 					'Cat'  => { with => ['Pet'] },
 					'Dog'  => { with => ['Pet'] },
 					'Cow'  => { with => ['Livestock', 'Milkable'] },
-					'Pig'  => { with => ['Livestock'] },
+					'Pig'  => {
+						with => ['Livestock'] ,
+						factory => [
+							'new_swine', 'new_pig', 'new_sow', \'new',
+							'new_bacon', 'new_ham', 'new_pork', sub { my ($f, $k) = (shift, shift); my $o = $k->new(@_); $o->status('dead'); $o },
+							'new_oinker',
+						],
+					},
 				],
 			},
 			'Collar' => {
@@ -88,6 +95,7 @@ for my $class (qw/Animal Panda Cat Dog Cow Pig/) {
 	my $factory = lc "new_$class";
 	can_ok('Local::Factories', $factory);
 	my $obj = 'Local::Factories'->$factory(name => "My $class");
+	is($obj->name, "My $class");
 	isa_ok($obj, "Local::MyApp::Animal");
 	isa_ok($obj, "Local::MyApp::$class") unless $class eq 'Animal';
 	does_ok($obj, 'Local::MyApp::Pet') if $class =~ /Cat|Dog/;
@@ -110,6 +118,12 @@ is($d->milk, 'the white stuff', '$d->milk');
 is($d->FACTORY, 'Local::Factories', '$d->FACTORY');
 is($d->FACTORY->type_library, 'Local::MyApp::Types', '$d->FACTORY->type_library');
 is($d->FACTORY->get_type_for_package(class => ref $d)->name, 'Cow', '$d->FACTORY->get_type_for_package');
+
+my $ham = Local::Factories->new_ham(name => 'Ham');
+is($ham->status, 'dead', 'factory with coderef');
+
+my $harry_trotter = Local::Factories->new_oinker(name => 'Harry');
+is($harry_trotter->name, 'Harry', 'factory with default implementation');
 
 my $e = exception {
 	Local::MyApp::Cow->new(age => 1);
