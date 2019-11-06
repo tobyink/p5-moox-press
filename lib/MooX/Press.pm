@@ -49,6 +49,8 @@ my $_handle_list_add_nulls = sub {
 	goto $_handle_list;
 };
 
+my %_cached_moo_helper;
+
 sub import {
 	my $builder = shift;
 	my $caller  = caller;
@@ -114,6 +116,8 @@ sub import {
 		my ($pkg_name, $pkg_opts) = @$class;
 		$builder->make_class($pkg_name, $pkg_opts->$_handle_list, %opts);
 	}
+	
+	%_cached_moo_helper = ();  # cleanups
 }
 
 sub munge_options {
@@ -570,22 +574,27 @@ sub _make_package {
 	return $qname;
 }
 
-my %_cached_moo_helper;
 sub _get_moo_helper {
 	my $builder = shift;
 	my ($package, $helpername) = @_;
 	return $_cached_moo_helper{"$package\::$helpername"}
 		if $_cached_moo_helper{"$package\::$helpername"};
-	die unless $helpername =~ /^(has|with|extends|around|before|after)$/;
-	my $tracker = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($package))
-		? $Moo::Role::INFO{$package}{exports}
-		: $Moo::MAKERS{$package}{exports};
+	die "lolwut?" unless $helpername =~ /^(has|with|extends|around|before|after)$/;
+	my $is_role = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($package));
+	my $tracker = $is_role ? $Moo::Role::INFO{$package}{exports} : $Moo::MAKERS{$package}{exports};
 	if (ref $tracker) {
-		return ($_cached_moo_helper{"$package\::$helpername"} = $tracker->{$helpername});
+		$_cached_moo_helper{"$package\::$helpername"} ||= $tracker->{$helpername};
 	}
 	# I hate this...
-	$_cached_moo_helper{"$package\::$helpername"} =
-		eval sprintf('do { package %s; use Moo; my $coderef = \&%s; no Moo; $coderef };', $package, $helpername);
+	$_cached_moo_helper{"$package\::$helpername"} ||= eval sprintf(
+		'do { package %s; use Moo%s; my $coderef = \&%s; no Moo%s; $coderef };',
+		$package,
+		$is_role ? '::Role' : '',
+		$helpername,
+		$is_role ? '::Role' : '',
+	);
+	die "BADNESS: couldn't get helper '$helpername' for package '$package'" unless $_cached_moo_helper{"$package\::$helpername"};
+	$_cached_moo_helper{"$package\::$helpername"};
 }
 
 sub make_attribute_moo {
