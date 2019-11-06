@@ -10,8 +10,6 @@ BEGIN {
 };
 
 use MooX::Press (
-	version   => $VERSION,
-	authority => $AUTHORITY,
 	'class:UA' => {
 		extends => '::HTTP::Tiny',  # external, "::" prefix
 		around  => [
@@ -24,15 +22,17 @@ use MooX::Press (
 	},
 	'class:Response' => {
 		has      => [qw(success url status reason content headers redirects)],
-		subclass => [qw(Success Failure)],
-		factory  => [
-			new_response => sub {
-				my ($f, $k) = (shift, shift);
-				my $args = ref($_[0]) ? $_[0] : { @_ };
-				$args->{success} ? $f->new_success($args) : $f->new_failure($args);
-			},
-		],
+#		subclass => [qw(Success Failure)],
+#		factory  => [
+#			new_response => sub {
+#				my ($f, $k) = (shift, shift);
+#				my $args = ref($_[0]) ? $_[0] : { @_ };
+#				$args->{success} ? $f->new_success($args) : $f->new_failure($args);
+#			},
+#		],
 	},
 );
 
 1;
+
+# the commented out bit can be fun
