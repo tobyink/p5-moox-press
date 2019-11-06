@@ -77,3 +77,9 @@
 	changeset [
 		item "Support `type` in attribute specs."^^Addition;
 	].
+
+`MooX-Press 0.012 cpan:TOBYINK`
+	issued  2019-11-06;
+	changeset [
+		item "Fix for newer versions of Moo::Role."^^Bugfix;
+	].
