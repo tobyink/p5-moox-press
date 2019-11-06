@@ -1630,6 +1630,8 @@ L<http://rt.cpan.org/Dist/Display.html?Queue=MooX-Press>.
 
 L<Moo>, L<MooX::Struct>, L<Types::Standard>.
 
+L<portable::loader>.
+
 =head1 AUTHOR
 
 Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
