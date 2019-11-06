@@ -83,3 +83,9 @@
 	changeset [
 		item "Fix for newer versions of Moo::Role."^^Bugfix;
 	].
+
+`MooX-Press 0.013 cpan:TOBYINK`
+	issued  2019-11-06;
+	changeset [
+		item "Allow classes to have multiple factories to create them."^^Addition;
+	].
