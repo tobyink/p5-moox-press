@@ -89,3 +89,9 @@
 	changeset [
 		item "Allow classes to have multiple factories to create them."^^Addition;
 	].
+
+`MooX-Press 0.014 cpan:TOBYINK`
+	issued  2020-01-07;
+	changeset [
+		item "Allow type names given as strings to be prefixed with @ or % to indicate ArrayRef of or HashRef of."^^Addition;
+	].
