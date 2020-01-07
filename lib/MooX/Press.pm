@@ -169,9 +169,14 @@ sub munge_class_options {
 sub qualify_name {
 	shift;
 	my ($name, $prefix, $parent) = @_;
-	return join("::", $parent, $1) if (defined $parent and $name =~ /^\+(.+)/);
-	return $1 if $name =~ /^::(.+)$/;
-	$prefix ? join("::", $prefix, $name) : $name;
+	my $sigil = "";
+	if ($name =~ /^[@%\$]/) {
+		$sigil = substr $name, 0, 1;
+		$name  = substr $name, 1;
+	}
+	return $sigil.join("::", $parent, $1) if (defined $parent and $name =~ /^\+(.+)/);
+	return $sigil.$1 if $name =~ /^::(.+)$/;
+	$prefix ? $sigil.join("::", $prefix, $name) : $sigil.$name;
 }
 
 sub type_name {
