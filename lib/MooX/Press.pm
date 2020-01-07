@@ -222,6 +222,20 @@ sub prepare_type_library {
 	my $getter = sub {
 		my $me = shift;
 		my ($kind, $target) = @_;
+		if ($target =~ /^([@%])(.+)$/) {
+			my $sigil = $1;
+			$target = $2;
+			if ($sigil eq '@') {
+				require Types::Standard;
+				return Types::Standard::ArrayRef->of($types_hash{$kind}{$target})
+					if $types_hash{$kind}{$target};
+			}
+			elsif ($sigil eq '%') {
+				require Types::Standard;
+				return Types::Standard::HashRef->of($types_hash{$kind}{$target})
+					if $types_hash{$kind}{$target};
+			}
+		}
 		$types_hash{$kind}{$target};
 	};
 	if (defined $opts{'factory_package'} or not exists $opts{'factory_package'}) {
