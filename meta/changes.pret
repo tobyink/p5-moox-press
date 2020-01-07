@@ -95,3 +95,9 @@
 	changeset [
 		item "Allow type names given as strings to be prefixed with @ or % to indicate ArrayRef of or HashRef of."^^Addition;
 	].
+
+`MooX-Press 0.015 cpan:TOBYINK`
+	issued  2020-01-07;
+	changeset [
+		item "Fix interaction of automatic package prefixes and sigils."^^Bugfix;
+	].
