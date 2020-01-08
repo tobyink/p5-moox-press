@@ -120,7 +120,7 @@ L<Types::Standard>, L<Types::Common::Numeric>, and L<Types::Common::String>.
 
 =item *
 
-C<compile>, C<compile_named>, and C<compile_named_oo> from L<Scalar::Util>.
+C<compile>, C<compile_named>, and C<compile_named_oo> from L<Type::Params>.
 
 =item *
 
