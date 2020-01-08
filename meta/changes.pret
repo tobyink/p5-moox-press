@@ -103,10 +103,16 @@
 	].
 
 `MooX-Press 0.016 cpan:TOBYINK`
-	issued  2020-01-07;
+	issued  2020-01-08;
 	changeset [
 		item "Documentation of @ and % sigils for `isa`."^^Documentation;
 		item "Other improvements to type constraint related documentation."^^Documentation;
 		item "type_library_can"^^Addition;
 		item "factory_package_can"^^Addition;
+	].
+
+`MooX-Press 0.017 cpan:TOBYINK`
+	issued  2020-01-08;
+	changeset [
+		item "MooX::Press::Keywords"^^Addition;
 	].
