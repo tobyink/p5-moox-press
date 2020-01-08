@@ -9,6 +9,7 @@
 	:runtime-requirement    [ :on "Module::Runtime"^^:CpanId ];
 	:runtime-requirement    [ :on "namespace::autoclean"^^:CpanId ];
 	:runtime-requirement    [ :on "Moo 1.006"^^:CpanId ];
+	:runtime-requirement    [ :on "Try::Tiny"^^:CpanId ];
 	:test-recommendation    [ :on "Moose 2.12"^^:CpanId ];
 	:test-recommendation    [ :on "Mouse"^^:CpanId ];
 	:test-requirement       [ :on "Test::More 0.96"^^:CpanId ];
