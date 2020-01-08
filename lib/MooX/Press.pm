@@ -25,6 +25,8 @@ my @delete_keys = qw(
 	after
 	type_name
 	can
+	type_library_can
+	factory_package_can
 );
 
 my $_handle_list = sub {
@@ -97,6 +99,17 @@ sub import {
 			$opts{type_library},
 			qw( Types::Standard Types::Common::Numeric Types::Common::String Types::TypeTiny ),
 		);
+	}
+	
+	{
+		my %methods;
+		my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
+		
+		%methods = delete($opts{factory_package_can})->$_handle_list_add_nulls;
+		$builder->$method_installer($opts{'factory_package'}||$opts{'caller'}, \%methods) if keys %methods;
+		
+		%methods = delete($opts{type_library_can})->$_handle_list_add_nulls;
+		$builder->$method_installer($opts{type_library}, \%methods) if keys %methods;
 	}
 	
 	for my $role (@roles) {
@@ -445,10 +458,13 @@ sub _make_package {
 	
 	my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
 	{
-		my %methods = $opts{can}->$_handle_list_add_nulls;
-		if (keys %methods) {
-			$builder->$method_installer($qname, \%methods);
-		}
+		my %methods;
+		%methods = $opts{can}->$_handle_list_add_nulls;
+		$builder->$method_installer($qname, \%methods) if keys %methods;
+		%methods = $opts{factory_package_can}->$_handle_list_add_nulls;
+		$builder->$method_installer($opts{'factory_package'}||$opts{'caller'}, \%methods) if keys %methods;
+		%methods = $opts{type_library_can}->$_handle_list_add_nulls;
+		$builder->$method_installer($opts{type_library}, \%methods) if keys %methods;
 	}
 	
 	{
@@ -945,6 +961,14 @@ considerably slower than for immutable classes, so this is usually a bad
 idea.
 
 Only supported for Moose. Unnecessary for Moo anyway. Defaults to false.
+
+=item C<< factory_package_can >> I<< (HashRef) >>
+
+Hashref of additional subs to install into the factory package.
+
+=item C<< type_library_can >> I<< (HashRef) >>
+
+Hashref of additional subs to install into the factory package.
 
 =back
 
@@ -1531,15 +1555,76 @@ name and your application's namespace prefix is added. So
 C<< isa => "HashRef" >> doesn't mean what you think it means. It means
 an object blessed into the "YourApp::HashRef" class.
 
-Use blessed type constraint objects, such as those from L<Types::Standard>.
+That is a feature though, not a weakness.
+
+  use MooX::Press (
+    prefix  => 'Nature',
+    class   => [
+      'Leaf'  => {},
+      'Tree'  => {
+        has  => {
+          'nicest_leaf'  => { isa => 'Leaf' },
+        },
+      },
+    ],
+  );
+
+The C<< Nature::Tree >> and C<< Nature::Leaf >> classes will be built, and
+MooX::Press knows that the C<nicest_leaf> is supposed to be a blessed
+C<< Nature::Leaf >> object.
+
+String type names can be prefixed with C<< @ >> or C<< % >> to indicate an
+arrayref or hashref of a type:
+
+  use MooX::Press (
+    prefix  => 'Nature',
+    class   => [
+      'Leaf'  => {},
+      'Tree'  => {
+        has  => {
+          'foliage'  => { isa => '@Leaf' },
+        },
+      },
+    ],
+  );
+
+For more everything else, use blessed type constraint objects, such as those
+from L<Types::Standard>, or use C<type> as documented below.
+
+  use Types::Standard qw( Str );
+  use MooX::Press (
+    prefix  => 'Nature',
+    class   => [
+      'Leaf'  => {},
+      'Tree'  => {
+        has  => {
+          'foliage'  => { isa => '@Leaf' },
+          'species'  => { isa => Str },
+        },
+      },
+    ],
+  );
 
 =item C<< type >> I<< (Str) >>
 
 C<< type => "HashRef" >> does what you think  C<< isa => "HashRef" >> should
-do. More specifically it searches your type library, along with
+do. More specifically it searches (by name) your type library, along with
 L<Types::Standard>, L<Types::Common::Numeric>, and L<Types::Common::String>
 to find the type constraint it thinks you wanted. It's smart enough to deal
 with parameterized types, unions, intersections, and complements.
+
+  use MooX::Press (
+    prefix  => 'Nature',
+    class   => [
+      'Leaf'  => {},
+      'Tree'  => {
+        has  => {
+          'foliage'  => { isa  => '@Leaf' },
+          'species'  => { type => 'Str' },
+        },
+      },
+    ],
+  );
 
 =item C<< coerce >> I<< (Bool) >>
 
