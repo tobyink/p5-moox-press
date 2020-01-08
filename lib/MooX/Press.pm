@@ -962,11 +962,11 @@ idea.
 
 Only supported for Moose. Unnecessary for Moo anyway. Defaults to false.
 
-=item C<< factory_package_can >> I<< (HashRef) >>
+=item C<< factory_package_can >> I<< (HashRef[CodeRef]) >>
 
 Hashref of additional subs to install into the factory package.
 
-=item C<< type_library_can >> I<< (HashRef) >>
+=item C<< type_library_can >> I<< (HashRef[CodeRef]) >>
 
 Hashref of additional subs to install into the factory package.
 
