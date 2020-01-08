@@ -1626,6 +1626,13 @@ with parameterized types, unions, intersections, and complements.
     ],
   );
 
+C<< type => $blessed_type_object >> does still work.
+
+C<type> and C<isa> are basically the same as each other, but differ in
+how they'll interpret a string. C<isa> assumes it's a class name as applies
+the package prefix to it; C<type> assumes it's the name of a type constraint
+which has been defined in some type library somewhere.
+
 =item C<< coerce >> I<< (Bool) >>
 
 MooX::Press automatically implies C<< coerce => 1 >> when you give a
@@ -1634,7 +1641,11 @@ explicitly provide C<< coerce => 0 >>.
 
 =item C<< does >> I<< (Str) >>
 
-Similarly, these will be given your namespace prefix.
+Similarly to C<isa>, these will be given your namespace prefix.
+
+  # These mean the same...
+  does => 'SomeRole',
+  type => Types::Standard::ConsumerOf['MyApp::SomeRole'],
 
 =item C<< enum >> I<< (ArrayRef[Str]) >>
 
@@ -1642,7 +1653,7 @@ This is a cute shortcut for an enum type constraint.
 
   # These mean the same...
   enum => ['foo', 'bar'],
-  isa  => Types::Standard::Enum['foo', 'bar'],
+  type => Types::Standard::Enum['foo', 'bar'],
 
 =back
 
