@@ -116,3 +116,9 @@
 	changeset [
 		item "MooX::Press::Keywords"^^Addition;
 	].
+
+`MooX-Press 0.018 cpan:TOBYINK`
+	issued  2020-01-08;
+	changeset [
+		item "Fix typo."^^Documentation;
+	].
