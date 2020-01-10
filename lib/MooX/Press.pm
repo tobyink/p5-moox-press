@@ -485,7 +485,7 @@ sub _make_package {
 			my %spec_hints;
 			if ($attrname =~ /^(\+?)(\$|\%|\@)(.+)$/) {
 				$spec_hints{isa} ||= {
-					'$' => ($nondeep ||= ~ArrayRef | ~HashRef),
+					'$' => ($nondeep ||= ((~ArrayRef)&(~HashRef))),
 					'@' => ArrayLike,
 					'%' => HashLike,
 				}->{$2};
