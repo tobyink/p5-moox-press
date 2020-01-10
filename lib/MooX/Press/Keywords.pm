@@ -41,10 +41,6 @@ sub confess {
 
 $EXPORT_TAGS{ 'util' } = [qw/ blessed confess /];
 
-use Type::Params qw( compile compile_named compile_named_oo );
-
-$EXPORT_TAGS{ 'params' } = [qw/ compile compile_named compile_named_oo /];
-
 use Try::Tiny;
 
 $EXPORT_TAGS{ 'try' } = [qw/ try catch finally /];
@@ -117,10 +113,6 @@ L<strict> and L<warnings>.
 =item *
 
 L<Types::Standard>, L<Types::Common::Numeric>, and L<Types::Common::String>.
-
-=item *
-
-C<compile>, C<compile_named>, and C<compile_named_oo> from L<Type::Params>.
 
 =item *
 

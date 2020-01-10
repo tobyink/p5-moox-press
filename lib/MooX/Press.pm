@@ -59,13 +59,15 @@ sub import {
 	my $caller  = caller;
 	my %opts    = @_==1 ? shift->$_handle_list_add_nulls : @_;
 	$opts{caller}  ||= $caller;
-	$opts{prefix} = $opts{caller} unless exists $opts{prefix};
 	$opts{toolkit} ||= $ENV{'PERL_MOOX_PRESS_TOOLKIT'} || 'Moo';
 	
 	$opts{version} = $opts{caller}->VERSION
 		unless exists $opts{version};
 	$opts{authority} = do { no strict 'refs'; no warnings 'once'; ${$opts{caller}."::AUTHORITY"} }
 		unless exists $opts{authority};
+	
+	$opts{prefix}          = $opts{caller} unless exists $opts{prefix};
+	$opts{factory_package} = $opts{prefix} unless exists $opts{factory_package};
 	
 	$builder->munge_options(\%opts);
 	
@@ -218,6 +220,7 @@ sub prepare_type_library {
 	my %types_hash;
 	require Type::Tiny::Role;
 	require Type::Tiny::Class;
+	require Type::Registry;
 	eval "package $lib; use Type::Library -base; 1"
 		or $builder->croak("Could not prepare type library $lib: $@");
 	require Module::Runtime;
@@ -233,6 +236,7 @@ sub prepare_type_library {
 		);
 		$types_hash{$kind}{$target} = $tc_obj;
 		$me->add_type($tc_obj);
+		Type::Registry->for_class($me)->add_type($tc_obj);
 		if ($coercions) {
 			$none ||= ~Any;
 			$tc_obj->coercion->add_type_coercions($none, 'die()');
@@ -587,10 +591,18 @@ sub _make_package {
 							eval "package $fpackage; sub $name :method { splice(\@_, 1, 0, '$qname'); goto \$coderef }; 1"
 								or $builder->croak("Could not create factory $name in $fpackage: $@");
 						}
-						else {
+						elsif (is_ScalarRef $coderef) {
 							my $target = $$coderef;
 							eval "package $fpackage; sub $name :method { shift; '$qname'->$target\(\@_) }; 1"
 								or $builder->croak("Couldn't create factory $name in $fpackage: $@");
+						}
+						elsif (is_HashRef $coderef) {
+							my %meta = %$coderef;
+							$meta{curry} ||= [$qname];
+							$builder->$method_installer($fpackage, { $name => \%meta });
+						}
+						else {
+							die "lolwut?";
 						}
 					}
 				}
@@ -729,12 +741,117 @@ sub install_methods {
 	my ($class, $methods) = @_;
 	for my $name (sort keys %$methods) {
 		no strict 'refs';
-		my $coderef = $methods->{$name};
-		# Why use a wrapper? Because don't want to rename coderefs with Sub::Name.
-		# Why not rename? Because it could be installed into multiple packages.
-		eval "package $class; sub $name :method { goto \$coderef }; 1"
-			or $builder->croak("Could not create method $name in package $class: $@");
+		my ($coderef, $signature, $signature_style, $invocant_count, @curry);
+		
+		if (is_CodeRef($methods->{$name})) {
+			$coderef = $methods->{$name};
+			$signature_style = 'code';
+		}
+		elsif (is_HashRef($methods->{$name})) {
+			$coderef   = $methods->{$name}{code};
+			$signature = $methods->{$name}{signature};
+			@curry     = @{ $methods->{$name}{curry} || [] };
+			$invocant_count  = exists($methods->{$name}{invocant_count}) ? $methods->{$name}{invocant_count} : 1;
+			$signature_style = $methods->{$name}{named} ? 'named' : 'positional';
+		}
+		
+		my $ok;
+		if ($signature) {
+			$signature_style eq 'code'
+				? CodeRef->assert_valid($signature)
+				: ArrayRef->assert_valid($signature);
+			
+			$ok = eval qq{
+				package $class;
+				my \$check;
+				sub $name :method {
+					my \@invocants = splice(\@_, 0, $invocant_count);
+					\$check ||= q($builder)->_build_method_signature_check(\$invocants[-1], q($class\::$name), \$signature_style, \$signature, \\\@invocants);
+					\@_ = (\@invocants, \@curry, \&\$check);
+					goto \$coderef;
+				};
+				1;
+			};
+		}
+		else {
+			# Why use a wrapper? Because don't want to rename coderefs with Sub::Name.
+			# Why not rename? Because it could be installed into multiple packages.
+			$ok = eval "package $class; sub $name :method { goto \$coderef }; 1";
+		}
+		
+		$ok or $builder->croak("Could not create method $name in package $class: $@");
 	}
+}
+
+# need to partially parse stuff for Type::Params to look up type names
+sub _build_method_signature_check {
+	my $builder = shift;
+	my ($instance, $method_name, $signature_style, $signature) = @_;
+	my $type_library;
+	my @sig = @$signature;
+	
+	return $signature if $signature_style eq 'code';
+	
+	require Type::Params;
+	
+	my $global_opts = {};
+	$global_opts = shift(@sig) if is_HashRef($sig[0]) && !$sig[0]{slurpy};
+	
+	$global_opts->{subname} ||= $method_name;
+	
+	my $is_named = ($signature_style eq 'named');
+	my @params;
+	
+	my $reg;
+	
+	while (@sig) {
+		if (is_HashRef($sig[0]) and $sig[0]{slurpy}) {
+			push @params, shift @sig;
+			die "lolwut? after slurpy? you srs?" if @sig;
+		}
+		
+		my ($name, $type, $opts) = (undef, undef, {});
+		if ($is_named) {
+			($name, $type) = splice(@sig, 0, 2);
+		}
+		else {
+			$type = shift(@sig);
+		}
+		if (is_HashRef($sig[0]) && !$sig[0]{slurpy}) {
+			$opts = shift(@sig);
+		}
+		
+		# All that work, just to do this!!!
+		if (is_Str($type) and not $type =~ /^[01]$/) {
+			$reg ||= do {
+				my ($factory, $typelib) = ref($instance)||$instance;
+				eval { $factory = $instance->FACTORY; 1 };
+				eval { $typelib = $factory->type_library; 1 }
+					or die "No type_library method for $factory";
+				Type::Registry->for_class($typelib);
+			};
+			
+			if ($type =~ /^\%/) {
+				$type = HashRef->of(
+					$reg->lookup(substr($type, 1))
+				);
+			}
+			elsif ($type =~ /^\@/) {
+				$type = ArrayRef->of(
+					$reg->lookup(substr($type, 1))
+				);
+			}
+			else {
+				$type = $reg->lookup($type);
+			}
+		}
+		
+		push @params, $is_named ? ($name, $type, $opts) : ($type, $opts);
+	}
+	
+	my $next = $is_named ? \&Type::Params::compile_named_oo : \&Type::Params::compile;
+	@_ = ($global_opts, @params);
+	goto($next);
 }
 
 sub install_constants {
@@ -918,7 +1035,7 @@ leading double colon, like "::Animal".
 A package name to install methods like the C<new_cat> and C<new_cow> methods
 in L</SYNOPSIS>.
 
-This defaults to caller, but may be explicitly set to undef to suppress the
+This defaults to prefix, but may be explicitly set to undef to suppress the
 creation of such methods.
 
 In every class (but not role) that MooX::Press builds, there will be a
@@ -1688,6 +1805,87 @@ This is a cute shortcut for an enum type constraint.
 
 =back
 
+=head3 Method Signatures
+
+Most places where a coderef is expected, MooX::Press will also accept a
+hashref of the form:
+
+  {
+    signature  => [ ... ],
+    named      => 1,
+    code       => sub { ... },
+  }
+
+The C<signature> is a specification to be passed to C<compile> or
+C<compile_named_oo> from L<Type::Params> (depending on whether C<named>
+is true or false).
+
+Unlike L<Type::Params>, these signatures allow type constraints to be
+given as strings, which will be looked up by name.
+
+This should work for C<can>, C<factory_can>, C<type_library_can>,
+C<factory>, and C<builder> methods, but will not work for method
+modifiers.
+
+Example with named parameters:
+
+  use MooX::Press (
+    prefix => 'Wedding',
+    class  => [
+      'Person' => { has => [qw( $name $spouse )] },
+      'Officiant' => {
+        can => {
+          'marry' => {
+            signature => [ bride => 'Person', groom => 'Person' ],
+            named     => 1,
+            code      => sub {
+              my ($self, $args) = @_;
+              $args->bride->spouse($args->groom);
+              $args->groom->spouse($args->bride);
+              printf("%s, you may kiss the bride\n", $args->groom->name);
+              return $self;
+            },
+          },
+        },
+      },
+    ],
+  );
+  
+  my $alice  = Wedding->new_person(name => 'Alice');
+  my $bob    = Wedding->new_person(name => 'Robert');
+  
+  my $carol  = Wedding->new_officiant(name => 'Carol');
+  $carol->marry(bride => $alice, groom => $bob);
+
+Example with positional parameters:
+
+  use MooX::Press (
+    prefix => 'Wedding',
+    class  => [
+      'Person' => { has => [qw( $name $spouse )] },
+      'Officiant' => {
+        can => {
+          'marry' => {
+            signature => [ 'Person', 'Person' ],
+            code      => sub {
+              my ($self, $bride, $groom) = @_;
+              $bride->spouse($groom);
+              $groom->spouse($bride);
+              printf("%s, you may kiss the bride\n", $groom->name);
+              return $self;
+            },
+          },
+        },
+      },
+    ],
+  );
+  
+  my $alice  = Wedding->new_person(name => 'Alice');
+  my $bob    = Wedding->new_person(name => 'Robert');
+  
+  my $carol  = Wedding->new_officiant(name => 'Carol');
+  $carol->marry($alice, $bob);
+
 =head2 Optimization Features
 
 MooX::Press will automatically load L<MooX::TypeTiny> if it's installed,
@@ -1824,36 +2022,57 @@ Or if you really want to use C<isa>:
   }
 
 However, the type library is only available I<after> you've used MooX::Press.
-If you wish to check something is a leaf within the class definitions,
-it's a little harder.
+This can make it tricky to refer to types within your methods.
 
   use constant APP => 'MyGarden';
   use MooX::Press (
     prefix => APP,
-    role  => [
-      'Leafy' => {
-        has => [ '@leafs' => sub { [] } ],
+    class => [
+      'Leaf',
+      'Tree'  => {
         can => {
           'add_leaf' => sub {
             my ($self, $leaf) = @_;
-            my $leaf_type = $self
-              ->FACTORY
-              ->type_library
-              ->get_type('Leaf');
-            $leaf_type->assert_valid($leaf);
-            push @{$self->leafs}, $leaf;
-            return $self;
+            
+            # How to check is_Leaf() here?
+            # It's kind of tricky!
+            
+            my $t = $self->FACTORY->type_library->get_type('Leaf');
+            if ($t->check($leaf)) {
+              ...;
+            }
           },
         },
       },
     ],
+  );
+
+As of version 0.019, MooX::Press has method signatures, so you're less
+likely to need to check types within your methods; you can just do it in
+the signature. This won't cover every case you need to check types, but
+it will cover the common ones.
+
+  use constant APP => 'MyGarden';
+  use MooX::Press (
+    prefix => APP,
     class => [
       'Leaf',
-      'Tree'  => { with => ['Leafy'] },
+      'Tree'  => {
+        can => {
+          'add_leaf' => {
+            signature => ['Leaf'],
+            code      => sub {
+              my ($self, $leaf) = @_;
+              ...;
+            },
+          },
+        },
+      },
     ],
   );
 
-Making this a little simpler is a todo.
+This also makes your code more declarative and less imperative, and that
+is a Good Thing, design-wise.
 
 =head2 The plural of "leaf" is "leaves", right?
 
