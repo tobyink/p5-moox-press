@@ -34,14 +34,14 @@ my $_handle_list = sub {
 	my ($thing) = @_;
 	return ()
 		unless defined $thing;
+	return $thing
+		if is_Str $thing;
 	return %$thing
 		if is_HashRef $thing;
 	return @$thing
 		if is_ArrayRef $thing;
 	goto $thing
 		if is_CodeRef $thing;
-	return $thing
-		if is_Str $thing;
 	die "Unexepcted thing; got $thing";
 };
 
