@@ -438,7 +438,7 @@ sub _make_package {
 			$builder->$method($qname, \@isa);
 		}
 	}
-
+	
 	for my $var (qw/VERSION AUTHORITY/) {
 		if (defined $opts{lc $var}) {
 			no strict 'refs';
