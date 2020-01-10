@@ -122,3 +122,12 @@
 	changeset [
 		item "Fix typo."^^Documentation;
 	].
+
+`MooX-Press 0.019 cpan:TOBYINK`
+	issued  2020-01-10;
+	changeset [
+		item "Method signatures."^^Addition;
+		item "Better type constratin documentation."^^Documentation;
+		item "Default `factory_package` to `prefix` instead of `caller`."^^Change;
+		item "Allow roles listed under `with` to be suffixed with a question mark."^^Change;
+	].
