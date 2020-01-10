@@ -82,7 +82,7 @@ sub import {
 	
 	if ($opts{type_library}) {
 		$builder->prepare_type_library($opts{type_library}, %opts);
-	
+		
 		for my $role (@roles) {
 			my ($pkg_name, $pkg_opts) = @$role;
 			$builder->munge_role_options($pkg_opts, \%opts);
@@ -93,7 +93,7 @@ sub import {
 			$builder->munge_class_options($pkg_opts, \%opts);
 			$builder->make_type_for_class($pkg_name, $pkg_opts->$_handle_list, %opts);
 		}
-	
+		
 		require Type::Registry;
 		my $reg = 'Type::Registry'->for_class($opts{type_library});
 		$reg->add_types($_) for (
@@ -406,9 +406,9 @@ sub _make_package {
 	
 	my @isa = map $builder->qualify_name($_, $opts{prefix}), $opts{extends}->$_handle_list;
 	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
+	my $tn = $builder->type_name($qname, $opts{prefix});
 	
 	if (!exists $opts{factory}) {
-		my $tn = $builder->type_name($qname, $opts{prefix});
 		$opts{factory} = 'new_' . lc $tn;
 	}
 	
@@ -1796,6 +1796,64 @@ Whole collections of classes and roles now have portable namespaces. The same
 classes and roles could be used with different prefixes in different scripts.
 You could load two different versions of your API in the same script with
 different prefixes. The possibilities are interesting.
+
+=head2 Why doesn't C<< $object->isa("Leaf") >> work?
+
+In the previous question, C<< $object->isa("Leaf") >> won't work to check
+if an object is a Leaf. This is because the full name of the class is
+"MyGarden::Leaf".
+
+You can of course check C<< $object->isa("MyGarden::Leaf") >> but this
+means you're starting to hard-code class names and prefixes again, which
+is one of the things MooX::Press aims to reduce.
+
+The "correct" way to check something is a leaf is:
+
+  use MyGarden::Types qw( is_Leaf );
+  
+  if ( is_Leaf($object) ) {
+    ...;
+  }
+
+Or if you really want to use C<isa>:
+
+  use MyGarden::Types qw( Leaf );
+  
+  if ( $object->isa(Leaf->class) ) {
+    ...;
+  }
+
+However, the type library is only available I<after> you've used MooX::Press.
+If you wish to check something is a leaf within the class definitions,
+it's a little harder.
+
+  use constant APP => 'MyGarden';
+  use MooX::Press (
+    prefix => APP,
+    role  => [
+      'Leafy' => {
+        has => [ '@leafs' => sub { [] } ],
+        can => {
+          'add_leaf' => sub {
+            my ($self, $leaf) = @_;
+            my $leaf_type = $self
+              ->FACTORY
+              ->type_library
+              ->get_type('Leaf');
+            $leaf_type->assert_valid($leaf);
+            push @{$self->leafs}, $leaf;
+            return $self;
+          },
+        },
+      },
+    ],
+    class => [
+      'Leaf',
+      'Tree'  => { with => ['Leafy'] },
+    ],
+  );
+
+Making this a little simpler is a todo.
 
 =head2 The plural of "leaf" is "leaves", right?
 
