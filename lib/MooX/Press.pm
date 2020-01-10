@@ -8,6 +8,7 @@ our $AUTHORITY = 'cpan:TOBYINK';
 our $VERSION   = '0.018';
 
 use Types::Standard -is, -types;
+use Types::TypeTiny qw(ArrayLike HashLike);
 use Exporter::Tiny qw(mkopt);
 use namespace::autoclean;
 
@@ -483,11 +484,10 @@ sub _make_package {
 			
 			my %spec_hints;
 			if ($attrname =~ /^(\+?)(\$|\%|\@)(.+)$/) {
-				require Types::TypeTiny;
 				$spec_hints{isa} ||= {
 					'$' => ($nondeep ||= ~ArrayRef | ~HashRef),
-					'@' => Types::TypeTiny::ArrayLike(),
-					'%' => Types::TypeTiny::HashLike(),
+					'@' => ArrayLike,
+					'%' => HashLike,
 				}->{$2};
 				no warnings 'uninitialized';
 				$attrname = $1.$3; # allow plus before sigil
