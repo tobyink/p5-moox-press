@@ -7,7 +7,7 @@ package MooX::Press;
 our $AUTHORITY = 'cpan:TOBYINK';
 our $VERSION   = '0.018';
 
-use Types::Standard -is;
+use Types::Standard -is, -types;
 use Exporter::Tiny qw(mkopt);
 use namespace::autoclean;
 
@@ -233,7 +233,7 @@ sub prepare_type_library {
 		$types_hash{$kind}{$target} = $tc_obj;
 		$me->add_type($tc_obj);
 		if ($coercions) {
-			$none ||= do { require Types::Standard; ~Types::Standard::Any() };
+			$none ||= ~Any;
 			$tc_obj->coercion->add_type_coercions($none, 'die()');
 		}
 	};
@@ -244,13 +244,11 @@ sub prepare_type_library {
 			my $sigil = $1;
 			$target = $2;
 			if ($sigil eq '@') {
-				require Types::Standard;
-				return Types::Standard::ArrayRef->of($types_hash{$kind}{$target})
+				return ArrayRef->of($types_hash{$kind}{$target})
 					if $types_hash{$kind}{$target};
 			}
 			elsif ($sigil eq '%') {
-				require Types::Standard;
-				return Types::Standard::HashRef->of($types_hash{$kind}{$target})
+				return HashRef->of($types_hash{$kind}{$target})
 					if $types_hash{$kind}{$target};
 			}
 		}
@@ -352,8 +350,7 @@ sub _do_coercions {
 			}
 			if (!ref $type) {
 				my $target = $builder->qualify_name($type, $opts{prefix});
-				require Types::Standard;
-				$type = Types::Standard::InstanceOf()->of($target);
+				$type = InstanceOf->of($target);
 			}
 			my $method_name = shift @coercions;
 			defined($method_name) && !ref($method_name)
@@ -401,6 +398,7 @@ sub make_class {
 	$builder->_make_package($name, %opts, is_role => 0);
 }
 
+my $nondeep;
 sub _make_package {
 	my $builder = shift;
 	my ($name, %opts) = @_;
@@ -487,7 +485,7 @@ sub _make_package {
 			if ($attrname =~ /^(\+?)(\$|\%|\@)(.+)$/) {
 				require Types::TypeTiny;
 				$spec_hints{isa} ||= {
-					'$' => ~(Types::Standard::ArrayRef()|Types::Standard::HashRef()),
+					'$' => ($nondeep ||= ~ArrayRef | ~HashRef),
 					'@' => Types::TypeTiny::ArrayLike(),
 					'%' => Types::TypeTiny::HashLike(),
 				}->{$2};
@@ -523,7 +521,7 @@ sub _make_package {
 						: undef;
 				};
 				$spec{isa} ||= do {
-					Types::Standard::ConsumerOf()->of($target);
+					ConsumerOf->of($target);
 				};
 			}
 			if ($spec{isa} && !ref $spec{isa}) {
@@ -534,11 +532,11 @@ sub _make_package {
 						: undef;
 				};
 				$spec{isa} ||= do {
-					Types::Standard::InstanceOf()->of($target);
+					InstanceOf->of($target);
 				};
 			}
 			if ($spec{enum}) {
-				$spec{isa} = Types::Standard::Enum()->of(@{delete $spec{enum}});
+				$spec{isa} = Enum->of(@{delete $spec{enum}});
 			}
 			if (is_Object($spec{type}) and $spec{type}->can('check')) {
 				$spec{isa} = delete $spec{type};
