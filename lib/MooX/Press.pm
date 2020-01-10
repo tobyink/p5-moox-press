@@ -598,7 +598,7 @@ sub _make_package {
 			eval "sub $qname\::FACTORY { '$fpackage' }; 1"
 				or $builder->croak("Couldn't create link back to factory $qname\::FACTORY: $@");
 		}
-
+		
 		if (defined $opts{'subclass'}) {
 			my @subclasses = $opts{'subclass'}->$_handle_list_add_nulls;
 			while (@subclasses) {
@@ -687,26 +687,41 @@ sub extend_class_mouse {
 	(Mouse::Util::find_meta($class) or $class->meta)->superclasses(@$isa);
 }
 
-sub apply_roles_moo {
-	my $builder = shift;
-	my ($class, $roles) = @_;
-	my $helper = $builder->_get_moo_helper($class, 'with');
-	$helper->(@$roles);
-}
+{
+	my $_process_roles = sub {
+		my ($r, $tk) = @_;
+		map {
+			my $role = $_;
+			if ($role =~ /\?$/) {
+				$role =~ s/\?$//;
+				eval "require $role; 1"
+					or eval "package $role; use $tk\::Role; 1";
+			}
+			$role;
+		} @$r;
+	};
+	
+	sub apply_roles_moo {
+		my $builder = shift;
+		my ($class, $roles) = @_;
+		my $helper = $builder->_get_moo_helper($class, 'with');
+		$helper->($roles->$_process_roles('Moo'));
+	}
 
-sub apply_roles_moose {
-	my $builder = shift;
-	my ($class, $roles) = @_;
-	require Moose::Util;
-	Moose::Util::ensure_all_roles($class, @$roles);
-}
+	sub apply_roles_moose {
+		my $builder = shift;
+		my ($class, $roles) = @_;
+		require Moose::Util;
+		Moose::Util::ensure_all_roles($class, $roles->$_process_roles('Moose'));
+	}
 
-sub apply_roles_mouse {
-	my $builder = shift;
-	my ($class, $roles) = @_;
-	require Mouse::Util;
-	# this can double-apply roles? :(
-	Mouse::Util::apply_all_roles($class, @$roles);
+	sub apply_roles_mouse {
+		my $builder = shift;
+		my ($class, $roles) = @_;
+		require Mouse::Util;
+		# this can double-apply roles? :(
+		Mouse::Util::apply_all_roles($class, $roles->$_process_roles('Mouse'));
+	}
 }
 
 sub install_methods {
@@ -1029,6 +1044,24 @@ Roles for this class to consume.
 
 The prefix is automatically added. Include a leading "::" if you don't
 want the prefix to be added.
+
+Roles may include a trailing "?". When these are seen, the role will be
+created if it doesn't seem to exist. This is because sometimes it's useful
+to have roles to classify classes (and check them with the C<does> method)
+even if those roles don't have any other functionality.
+
+  use MooX::Press (
+    prefix => 'Farm',
+    class  => [
+      'Sheep' => { with => ['Bleat?'] },
+    ],
+  );
+  
+  if (Farm::Sheep->new->does('Farm::Bleat')) {
+    ...;
+  }
+
+Without the "?", trying to compose a role that does not exist is an error.
 
 =item C<< has >> I<< (OptList) >>
 
