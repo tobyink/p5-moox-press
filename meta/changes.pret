@@ -131,3 +131,10 @@
 		item "Default `factory_package` to `prefix` instead of `caller`."^^Change;
 		item "Allow roles listed under `with` to be suffixed with a question mark."^^Change;
 	].
+
+`MooX-Press 0.020 cpan:TOBYINK`
+	issued  2020-01-13;
+	changeset [
+		item "Smarter Type::Registry stuff."^^Change;
+		item "Provide a `begin` option to run callback early in class/role definition."^^Addition;
+	].
