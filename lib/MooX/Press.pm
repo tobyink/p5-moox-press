@@ -1610,6 +1610,30 @@ Override C<end> for this class and any child classes.
 
 See L</Import Options>.
 
+=item C<< begin >> I<< (CodeRef) >>
+
+Override C<begin> for this class and any child classes.
+
+  use MooX::Press::Keywords qw( true false );
+  use MooX::Press (
+    prefix => 'Library',
+    class  => [
+      'Book' => {
+        begin => sub {
+          my $classname = shift;   # "Library::Book"
+          my $registry  = Type::Registry->for_class($classname);
+          $registry->alias_type('ArrayRef[Str]' => 'StrList')
+        },
+        has => {
+          'title'   => { type => 'Str',     required => true },
+          'authors' => { type => 'StrList', required => true },
+        },
+      },
+    ],
+  );
+
+See L</Import Options>.
+
 =back
 
 =head3 Role Options
