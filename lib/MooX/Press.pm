@@ -88,12 +88,12 @@ sub import {
 		for my $role (@roles) {
 			my ($pkg_name, $pkg_opts) = @$role;
 			$builder->munge_role_options($pkg_opts, \%opts);
-			$builder->make_type_for_role($pkg_name, $pkg_opts->$_handle_list, %opts);
+			$builder->make_type_for_role($pkg_name, %opts, $pkg_opts->$_handle_list);
 		}
 		for my $class (@classes) {
 			my ($pkg_name, $pkg_opts) = @$class;
 			$builder->munge_class_options($pkg_opts, \%opts);
-			$builder->make_type_for_class($pkg_name, $pkg_opts->$_handle_list, %opts);
+			$builder->make_type_for_class($pkg_name, %opts, $pkg_opts->$_handle_list);
 		}
 	}
 	
@@ -119,20 +119,20 @@ sub import {
 	
 	for my $role (@roles) {
 		my ($pkg_name, $pkg_opts) = @$role;
-		$builder->do_coercions_for_role($pkg_name, $pkg_opts->$_handle_list, %opts);
+		$builder->do_coercions_for_role($pkg_name, %opts, $pkg_opts->$_handle_list);
 	}
 	for my $class (@classes) {
 		my ($pkg_name, $pkg_opts) = @$class;
-		$builder->do_coercions_for_class($pkg_name, $pkg_opts->$_handle_list, %opts);
+		$builder->do_coercions_for_class($pkg_name, %opts, $pkg_opts->$_handle_list);
 	}
 	
 	for my $role (@roles) {
 		my ($pkg_name, $pkg_opts) = @$role;
-		$builder->make_role($pkg_name, $pkg_opts->$_handle_list, %opts);
+		$builder->make_role($pkg_name, %opts, $pkg_opts->$_handle_list);
 	}
 	for my $class (@classes) {
 		my ($pkg_name, $pkg_opts) = @$class;
-		$builder->make_class($pkg_name, $pkg_opts->$_handle_list, %opts);
+		$builder->make_class($pkg_name, %opts, $pkg_opts->$_handle_list);
 	}
 	
 	%_cached_moo_helper = ();  # cleanups
@@ -351,12 +351,10 @@ sub _do_coercions {
 		while (@coercions) {
 			my $type = shift @coercions;
 			if (!ref $type and $opts{type_library}) {
-				my $target = $builder->qualify_name($type, $opts{prefix});
-				my $tc = $opts{type_library}->get_type_for_package(class => $target)
-					|| $opts{type_library}->get_type_for_package(role => $target);
+				my $tc = $opts{type_library}->get_type($type);
 				$type = $tc if $tc;
 			}
-			if (!ref $type) {
+			elsif (!ref $type) {
 				my $target = $builder->qualify_name($type, $opts{prefix});
 				$type = InstanceOf->of($target);
 			}
@@ -1408,8 +1406,8 @@ Now that's out of the way, the exact structure for the arrayref of coercions
 can be explained. It is essentially a list of type-method pairs.
 
 The type may be either a blessed type constraint object (L<Type::Tiny>, etc)
-or it may be a class or role name that is being set up by MooX::Press, in
-which case it will have the prefix added, etc.
+or it may be a string type name for something that your type library knows
+about.
 
 The method is a string containing the method name to perform the coercion.
 
@@ -1457,13 +1455,15 @@ possible to have coercions from many different types.
     class => [
       'Foo::Bar' => {
         coerce => [
-          Str,        'from_string', sub { ... },
-          ArrayRef,   'from_array',  sub { ... },
-          HashRef,    'from_hash',   sub { ... },
-          'Foo::Baz', 'from_foobaz', sub { ... },
+          Str,      'from_string', sub { ... },
+          ArrayRef, 'from_array',  sub { ... },
+          HashRef,  'from_hash',   sub { ... },
+          'FBaz',   'from_foobaz', sub { ... },
         ],
       },
-      'Foo::Baz',
+      'Foo::Baz' => {
+        type_name => 'FBaz',
+       },
     ],
   );
 
