@@ -97,9 +97,10 @@ sub import {
 		}
 	}
 	
+	my $reg;
 	if ($opts{factory_package}) {
 		require Type::Registry;
-		my $reg = 'Type::Registry'->for_class($opts{factory_package});
+		$reg = 'Type::Registry'->for_class($opts{factory_package});
 		$reg->add_types($_) for (
 			$opts{type_library},
 			qw( Types::Standard Types::Common::Numeric Types::Common::String Types::TypeTiny ),
@@ -119,11 +120,11 @@ sub import {
 	
 	for my $role (@roles) {
 		my ($pkg_name, $pkg_opts) = @$role;
-		$builder->do_coercions_for_role($pkg_name, %opts, $pkg_opts->$_handle_list);
+		$builder->do_coercions_for_role($pkg_name, %opts, reg => $reg, $pkg_opts->$_handle_list);
 	}
 	for my $class (@classes) {
 		my ($pkg_name, $pkg_opts) = @$class;
-		$builder->do_coercions_for_class($pkg_name, %opts, $pkg_opts->$_handle_list);
+		$builder->do_coercions_for_class($pkg_name, %opts, reg => $reg, $pkg_opts->$_handle_list);
 	}
 	
 	for my $role (@roles) {
@@ -350,13 +351,9 @@ sub _do_coercions {
 		
 		while (@coercions) {
 			my $type = shift @coercions;
-			if (!ref $type and $opts{type_library}) {
-				my $tc = $opts{type_library}->get_type($type);
+			if (!ref $type) {
+				my $tc = $opts{reg}->lookup($type);
 				$type = $tc if $tc;
-			}
-			elsif (!ref $type) {
-				my $target = $builder->qualify_name($type, $opts{prefix});
-				$type = InstanceOf->of($target);
 			}
 			my $method_name = shift @coercions;
 			defined($method_name) && !ref($method_name)
@@ -578,7 +575,7 @@ sub _make_package {
 			my @method_names;
 			push(@method_names, shift @methods)
 				while (@methods and not ref $methods[0]);
-			my $coderef = shift @methods;
+			my $coderef = $builder->_prepare_method_modifier($qname, $modifier, \@method_names, shift(@methods));
 			$builder->$method($qname, $modifier, \@method_names, $coderef);
 		}
 	}
@@ -881,6 +878,32 @@ sub install_constants {
 				or $builder->croak("Could not create constant $name in package $class: $@");
 		}
 	}
+}
+
+sub _prepare_method_modifier {
+	my ($builder, $class, $kind, $names, $method) = @_;
+	return $method if is_CodeRef $method;
+	
+	my $coderef   = $method->{code};
+	my $signature = $method->{signature};
+	my @curry     = @{ $method->{curry} || [] };
+	my $signature_style = $method->{named} ? 'named' : 'positional';
+	
+	my $invocant_count = 1 + !!($kind eq 'around');
+	$invocant_count  = $method->{invocant_count} if exists $method->{invocant_count};
+	
+	my $name = join('|', @$names)."($kind)";
+
+	my $wrapped = eval qq{
+		my \$check;
+		sub {
+			my \@invocants = splice(\@_, 0, $invocant_count);
+			\$check ||= q($builder)->_build_method_signature_check(q($class), q($class\::$name), \$signature_style, \$signature, \\\@invocants);
+			\@_ = (\@invocants, \@curry, \&\$check);
+			goto \$coderef;
+		};
+	};
+	$wrapped or die("YIKES: $@");
 }
 
 sub modify_method_moo {
@@ -1867,8 +1890,15 @@ Unlike L<Type::Params>, these signatures allow type constraints to be
 given as strings, which will be looked up by name.
 
 This should work for C<can>, C<factory_can>, C<type_library_can>,
-C<factory>, and C<builder> methods, but will not work for method
-modifiers.
+C<factory>, C<builder> methods, and method modifiers. (Though if you
+are doing type checks in both the methods and method modifiers, this
+may result in unnecessary duplication of checks.)
+
+The invocant (C<< $self >>) is not included in the signature.
+(For C<around> method modifiers, the original coderef C<< $orig >> is
+logically a second invocant. For C<factory> methods installed in the
+factory package, the factory package name and class name are both
+considered invocants.) 
 
 Example with named parameters:
 
@@ -1928,6 +1958,10 @@ Example with positional parameters:
   
   my $carol  = Wedding->new_officiant(name => 'Carol');
   $carol->marry($alice, $bob);
+
+Methods with a mixture of named and positional parameters are not supported.
+If you really want such a method, don't provide a signature; just provide a
+coderef and manually unpack C<< @_ >>.
 
 =head2 Optimization Features
 
