@@ -138,3 +138,11 @@
 		item "Smarter Type::Registry stuff."^^Change;
 		item "Provide a `begin` option to run callback early in class/role definition."^^Addition;
 	].
+
+`MooX-Press 0.021 cpan:TOBYINK`
+	issued  2020-01-15;
+	changeset [
+		item "Prevent global options from overriding per-package options."^^Bugfix;
+		item "Method modifiers now support signatures."^^Addition;
+		item "String 'from' types in coercions are now interpreted as type names instead of class/role names. This is for consistency with signatures."^^Change;
+	].
