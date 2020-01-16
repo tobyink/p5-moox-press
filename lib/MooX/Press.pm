@@ -671,21 +671,54 @@ sub make_attribute_moo {
 	my $builder = shift;
 	my ($class, $attribute, $spec) = @_;
 	my $helper = $builder->_get_moo_helper($class, 'has');
+	if (is_Object($spec->{isa}) and $spec->{isa}->isa('Type::Tiny::Enum') and $spec->{handles}) {
+		$builder->_process_enum_moo(@_);
+	}
 	$helper->($attribute, %$spec);
+}
+
+sub _process_enum_moo {
+	my $builder = shift;
+	my ($class, $attribute, $spec) = @_;
+	require MooX::Enumeration;
+	my %new_spec = 'MooX::Enumeration'->process_spec($class, $attribute, %$spec);
+	if (delete $new_spec{moox_enumeration_process_handles}) {
+		'MooX::Enumeration'->install_delegates($class, $attribute, \%new_spec);
+	}
+	%$spec = %new_spec;
 }
 
 sub make_attribute_moose {
 	my $builder = shift;
 	my ($class, $attribute, $spec) = @_;
+	if (is_Object($spec->{isa}) and $spec->{isa}->isa('Type::Tiny::Enum')||$spec->{isa}->isa('Moose::Meta::TypeConstraint::Enum') and $spec->{handles}) {
+		$builder->_process_enum_moose(@_);
+	}
 	require Moose::Util;
 	(Moose::Util::find_meta($class) or $class->meta)->add_attribute($attribute, $spec);
+}
+
+sub _process_enum_moose {
+	my $builder = shift;
+	my ($class, $attribute, $spec) = @_;
+	require MooseX::Enumeration;
+	push @{ $spec->{traits}||=[] }, 'Enumeration';
 }
 
 sub make_attribute_mouse {
 	my $builder = shift;
 	my ($class, $attribute, $spec) = @_;
+	use Data::Dumper;
+	print Dumper($spec);
+	if (is_Object($spec->{isa}) and $spec->{isa}->isa('Type::Tiny::Enum') and $spec->{handles}) {
+		$builder->_process_enum_mouse(@_);
+	}
 	require Mouse::Util;
 	(Mouse::Util::find_meta($class) or $class->meta)->add_attribute($attribute, $spec);
+}
+
+sub _process_enum_mouse {
+	die 'not implemented';
 }
 
 sub extend_class_moo {
@@ -1868,6 +1901,31 @@ This is a cute shortcut for an enum type constraint.
   # These mean the same...
   enum => ['foo', 'bar'],
   type => Types::Standard::Enum['foo', 'bar'],
+
+If the type constraint is set to an enum and C<handles> is provided,
+then MooX::Press will automatically load L<MooX::Enumeration> or
+L<MooseX::Enumeration> as appropriate. (This is not supported for
+Mouse.)
+
+  use MooX::Press (
+    prefix  => 'Nature',
+    class   => [
+      'Leaf'  => {
+        has  => {
+          'colour' => {
+            enum    => ['green', 'red', 'brown'],
+            handles => 2,
+            default => 'green',
+          },
+        },
+       },
+    ],
+  );
+  
+  my $leaf = Nature->new_leaf;
+  if ( $leaf->colour_is_green ) {
+    print "leaf is green!\n";
+  }
 
 =back
 
