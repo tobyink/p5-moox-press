@@ -146,3 +146,10 @@
 		item "Method modifiers now support signatures."^^Addition;
 		item "String 'from' types in coercions are now interpreted as type names instead of class/role names. This is for consistency with signatures."^^Change;
 	].
+
+`MooX-Press 0.022 cpan:TOBYINK`
+	issued  2020-01-16;
+	changeset [
+		item "Roles now have `requires`."^^Addition;
+		item "Integration with MooX::Enumeration/MooseX::Enumeration."^^Addition;
+	].
