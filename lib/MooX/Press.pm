@@ -518,7 +518,7 @@ sub _make_package {
 			my %spec =
 				is_CodeRef($attrspec) ? (is => 'rw', lazy => 1, builder => $attrspec, clearer => $clearername) :
 				is_Object($attrspec) && $attrspec->can('check') ? (is => 'rw', isa => $attrspec) :
-				$attrspec->$_handle_list_add_nulls;
+				$attrspec->$_handle_list_add_nulls; # ????? should not add nulls ?????
 			if (is_CodeRef $spec{builder}) {
 				my $code = delete $spec{builder};
 				$spec{builder} = $buildername;
@@ -567,7 +567,15 @@ sub _make_package {
 			$builder->$method($qname, $attrname, \%spec);
 		}
 	}
-	
+
+	if ($opts{is_role}) {
+		my $method   = $opts{toolkit_require_methods} || ("require_methods_".lc $toolkit);
+		my %requires = $opts{requires}->$_handle_list_add_nulls;
+		if (keys %requires) {
+			$builder->$method($qname, \%requires);
+		}
+	}
+
 	for my $modifier (qw(before after around)) {
 		my $method = $opts{toolkit_modify_methods} || ("modify_method_".lc $toolkit);
 		my @methods = $opts{$modifier}->$_handle_list;
@@ -649,7 +657,7 @@ sub _get_moo_helper {
 	my ($package, $helpername) = @_;
 	return $_cached_moo_helper{"$package\::$helpername"}
 		if $_cached_moo_helper{"$package\::$helpername"};
-	die "lolwut?" unless $helpername =~ /^(has|with|extends|around|before|after)$/;
+	die "lolwut?" unless $helpername =~ /^(has|with|extends|around|before|after|requires)$/;
 	my $is_role = ($INC{'Moo/Role.pm'} && 'Moo::Role'->is_role($package));
 	my $tracker = $is_role ? $Moo::Role::INFO{$package}{exports} : $Moo::MAKERS{$package}{exports};
 	if (ref $tracker) {
@@ -777,6 +785,27 @@ sub extend_class_mouse {
 		# this can double-apply roles? :(
 		Mouse::Util::apply_all_roles($class, $roles->$_process_roles('Mouse'));
 	}
+}
+
+sub require_methods_moo {
+	my $builder = shift;
+	my ($role, $methods) = @_;
+	my $helper = $builder->_get_moo_helper($role, 'requires');
+	$helper->(sort keys %$methods);
+}
+
+sub require_methods_moose {
+	my $builder = shift;
+	my ($role, $methods) = @_;
+	require Moose::Util;
+	(Moose::Util::find_meta($role) or $role->meta)->add_required_methods(sort keys %$methods);
+}
+
+sub require_methods_mouse {
+	my $builder = shift;
+	my ($role, $methods) = @_;
+	require Mouse::Util;
+	(Mouse::Util::find_meta($role) or $role->meta)->add_required_methods(sort keys %$methods);
 }
 
 sub install_methods {
@@ -1314,7 +1343,7 @@ Builder coderefs are automatically installed as methods like
 
 For details of the hashrefs, see L</Attribute Specifications>.
 
-=item C<< can >> I<< (HashRef[CodeRef]) >>
+=item C<< can >> I<< (HashRef[CodeRef|HashRef]) >>
 
 A hashref of coderefs to install into the package.
 
@@ -1699,11 +1728,43 @@ exceptions:
 
 =over
 
+=item C<< requires >> I<< (ArrayRef) >>
+
+A list of methods required by the role.
+
+  package MyApp;
+  use MooX::Press (
+    role => [
+      'Milkable' => {
+        requires => ['get_udder'],
+        ...,
+      },
+    ],
+  );
+
+Each method can optionally be followed by a method-defining hashref like
+in C<can>:
+
+  package MyApp;
+  use MooX::Press (
+    role => [
+      'Milkable' => {
+        requires => [
+          'get_udder', { signature => [...], named => 0 },
+        ],
+        ...,
+      },
+    ],
+  );
+
+These hashrefs are currently ignored, but may be useful for people reading
+your role declarations.
+
 =item C<< extends >> I<< (Any) >>
 
 This option is disallowed.
 
-=item C<< can >> I<< (HashRef[CodeRef]) >>
+=item C<< can >> I<< (HashRef[CodeRef|HashRef]) >>
 
 The alternative style for defining methods may cause problems with the order
 in which things happen. Because C<< use MooX::Press >> happens at compile time,
