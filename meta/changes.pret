@@ -165,3 +165,9 @@
 	changeset [
 		item "Class and role generators now have generate_bleh methods in the factory."^^Addition;
 	].
+
+`MooX-Press 0.025 cpan:TOBYINK`
+	issued  2020-01-17;
+	changeset [
+		item "Saner API for slurpies in signatures."^^Addition;
+	].
