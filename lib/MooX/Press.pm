@@ -2543,7 +2543,7 @@ and return the class name as a string.
   is_SpeciesClass($Dog);          # true
 
 Note that there is no B<Species> type created, but instead a pair of types
-is created: C<SpeciesClass> and C<SpeciesInstance>.
+is created: B<SpeciesClass> and B<SpeciesInstance>.
 
 It is also possible to inherit from generated classes.
 
