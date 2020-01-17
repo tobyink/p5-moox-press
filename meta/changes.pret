@@ -153,3 +153,9 @@
 		item "Roles now have `requires`."^^Addition;
 		item "Integration with MooX::Enumeration/MooseX::Enumeration."^^Addition;
 	].
+
+`MooX-Press 0.023 cpan:TOBYINK`
+	issued  2020-01-17;
+	changeset [
+		item "class_generator and role_generator."^^Addition;
+	].
