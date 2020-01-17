@@ -777,7 +777,7 @@ sub _make_package_generator {
 	);
 	
 	if ($opts{factory_package}) {
-		my $tn = $builder->type_name($qname, $opts{prefix});		
+		my $tn = $builder->type_name($qname, $opts{prefix});
 		if (!exists $opts{factory}) {
 			$opts{factory} = 'generate_' . lc $tn;
 		}
