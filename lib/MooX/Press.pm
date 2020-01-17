@@ -1079,7 +1079,7 @@ sub _build_method_signature_check {
 		else {
 			$type = shift(@sig);
 		}
-		if (is_HashRef($sig[0]) && !$sig[0]{slurpy}) {
+		if (is_HashRef($sig[0]) && !ref($sig[0]{slurpy})) {
 			$opts = shift(@sig);
 		}
 		
@@ -1105,7 +1105,19 @@ sub _build_method_signature_check {
 			}
 		}
 		
-		push @params, $is_named ? ($name, $type, $opts) : ($type, $opts);
+		my $hide_opts = 0;
+		if ($opts->{slurpy} && !ref($opts->{slurpy})) {
+			delete $opts->{slurpy};
+			$type = { slurpy => $type };
+			$hide_opts = 1;
+		}
+		
+		push(
+			@params,
+			$is_named
+				? ($name, $type, $hide_opts?():($opts))
+				: (       $type, $hide_opts?():($opts))
+		);
 	}
 	
 	my $next = $is_named ? \&Type::Params::compile_named_oo : \&Type::Params::compile;
