@@ -169,5 +169,12 @@
 `MooX-Press 0.025 cpan:TOBYINK`
 	issued  2020-01-17;
 	changeset [
-		item "Saner API for slurpies in signatures."^^Addition;
+		item "Saner API for slurpies in signatures."^^Change;
+	].
+
+`MooX-Press 0.026 cpan:TOBYINK`
+	issued  2020-01-18;
+	changeset [
+		item "Better handling of type lookups from class/role generators."^^Change;
+		item "Fix `has` for Moose/Mouse classes and roles."^^Bugfix;
 	].

@@ -5,7 +5,7 @@ use warnings;
 package MooX::Press::Keywords;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.025';
+our $VERSION   = '0.026';
 
 use Type::Library -base;
 use Type::Utils ();
