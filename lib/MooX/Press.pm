@@ -777,6 +777,11 @@ sub _make_package_generator {
 	);
 	
 	if ($opts{factory_package}) {
+		require Type::Registry;
+		'Type::Registry'->for_class($qname)->set_parent(
+			'Type::Registry'->for_class($opts{factory_package})
+		);
+
 		my $tn = $builder->type_name($qname, $opts{prefix});
 		if (!exists $opts{factory}) {
 			$opts{factory} = 'generate_' . lc $tn;
@@ -822,12 +827,10 @@ sub generate_package {
 	$_generate_counter{$generator_package} = 0 unless exists $_generate_counter{$generator_package};
 	my $qname = sprintf('%s::__GEN%06d__', $generator_package, ++$_generate_counter{$generator_package});
 	
-	if ($global_opts->{factory_package}) {
-		require Type::Registry;
-		'Type::Registry'->for_class($qname)->set_parent(
-			'Type::Registry'->for_class($global_opts->{factory_package})
-		);
-	}
+	require Type::Registry;
+	'Type::Registry'->for_class($qname)->set_parent(
+		'Type::Registry'->for_class($generator_package)
+	);
 	
 	if ($kind eq 'class') {
 		my $method = $opts{toolkit_install_constants} || ("install_constants");
@@ -893,7 +896,7 @@ sub make_attribute_moose {
 		$builder->_process_enum_moose(@_);
 	}
 	require Moose::Util;
-	(Moose::Util::find_meta($class) or $class->meta)->add_attribute($attribute, $spec);
+	(Moose::Util::find_meta($class) or $class->meta)->add_attribute($attribute, %$spec);
 }
 
 sub _process_enum_moose {
@@ -912,7 +915,7 @@ sub make_attribute_mouse {
 		$builder->_process_enum_mouse(@_);
 	}
 	require Mouse::Util;
-	(Mouse::Util::find_meta($class) or $class->meta)->add_attribute($attribute, $spec);
+	(Mouse::Util::find_meta($class) or $class->meta)->add_attribute($attribute, %$spec);
 }
 
 sub _process_enum_mouse {
