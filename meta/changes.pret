@@ -178,3 +178,9 @@
 		item "Better handling of type lookups from class/role generators."^^Change;
 		item "Fix `has` for Moose/Mouse classes and roles."^^Bugfix;
 	].
+
+`MooX-Press 0.027 cpan:TOBYINK`
+	issued  2020-01-21;
+	changeset [
+		item "Support for Sub::HandlesVia."^^Addition;
+	].
