@@ -662,7 +662,15 @@ sub _make_package {
 				$spec{coerce} = 1;
 			}
 			
+			my ($shv_toolkit, $shv_data);
+			if ($spec{handles_via}) {
+				$shv_toolkit = "Sub::HandlesVia::Toolkit::$toolkit";
+				eval "require $shv_toolkit" or die($@);
+				$shv_data = $shv_toolkit->clean_spec($qname, $attrname, \%spec);
+			}
+			
 			$builder->$method($qname, $attrname, \%spec);
+			$shv_toolkit->install_delegations($shv_data) if $shv_data;
 		}
 	}
 
@@ -2211,6 +2219,11 @@ Mouse.)
   if ( $leaf->colour_is_green ) {
     print "leaf is green!\n";
   }
+
+=item C<< handles_via >> I<< Str|ArrayRef[Str] >>
+
+If your attribute has a C<handles_via> option, MooX::Press will load
+L<Sub::HandlesVia> for you.
 
 =back
 
