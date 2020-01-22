@@ -622,9 +622,17 @@ sub _make_package {
 				$spec{builder} = $buildername;
 				$builder->$method_installer($qname, { $buildername => $code });
 			}
+			if (defined $spec{clearer} and !ref $spec{clearer} and $spec{clearer} eq 1) {
+				$spec{clearer} = $clearername;
+			}
 			
 			%spec = (%spec_hints, %spec);
 			$spec{is} ||= 'rw';
+			if ($spec{is} eq 'lazy') {
+				$spec{is}   = 'ro',
+				$spec{lazy} = !!1;
+				$spec{builder} ||= $buildername;
+			}
 			
 			if ($spec{does}) {
 				my $target = $builder->qualify_name(delete($spec{does}), $opts{prefix});
@@ -660,6 +668,25 @@ sub _make_package {
 			
 			if (ref $spec{isa} && !exists $spec{coerce} && $spec{isa}->has_coercion) {
 				$spec{coerce} = 1;
+			}
+			
+			if ($toolkit ne 'Moo') {
+				if (defined $spec{trigger} and !ref $spec{trigger} and $spec{trigger} eq 1) {
+					$spec{trigger} = sprintf('_trigger_%s', $attrname);
+				}
+				if (defined $spec{trigger} and !ref $spec{trigger}) {
+					my $trigger_method = delete $spec{trigger};
+					$spec{trigger} = sub { shift->$trigger_method(@_) };
+				}
+				if ($spec{is} eq 'rwp') {
+					$spec{is} = 'ro';
+					$spec{writer} = '_set_'.$attrname unless exists $spec{writer};
+				}
+			}
+			
+			if (is_CodeRef $spec{coerce}) {
+				$spec{isa}    = $spec{isa}->no_coercions->plus_coercions(Types::Standard::Any, $spec{coerce});
+				$spec{coerce} = !!1;
 			}
 			
 			my ($shv_toolkit, $shv_data);
@@ -2088,6 +2115,9 @@ The following are exceptions:
 This is optional rather than being required, and defaults to "rw".
 (Yes, I prefer "ro" generally, but whatever.)
 
+MooX::Press supports the Moo-specific values of "rwp" and "lazy", and
+will translate them if you're using Moose or Mouse.
+
 =item C<< isa >> I<< (Str|Object) >>
 
 When the type constraint is a string, it is B<always> assumed to be a class
@@ -2173,12 +2203,6 @@ how they'll interpret a string. C<isa> assumes it's a class name as applies
 the package prefix to it; C<type> assumes it's the name of a type constraint
 which has been defined in some type library somewhere.
 
-=item C<< coerce >> I<< (Bool) >>
-
-MooX::Press automatically implies C<< coerce => 1 >> when you give a
-type constraint that has a coercion. If you don't want coercion then
-explicitly provide C<< coerce => 0 >>.
-
 =item C<< does >> I<< (Str) >>
 
 Similarly to C<isa>, these will be given your namespace prefix.
@@ -2220,10 +2244,35 @@ Mouse.)
     print "leaf is green!\n";
   }
 
-=item C<< handles_via >> I<< Str|ArrayRef[Str] >>
+=item C<< handles_via >> I<< (Str|ArrayRef[Str]) >>
 
 If your attribute has a C<handles_via> option, MooX::Press will load
 L<Sub::HandlesVia> for you.
+
+=item C<< coerce >> I<< (Bool|CodeRef) >>
+
+MooX::Press automatically implies C<< coerce => 1 >> when you give a
+type constraint that has a coercion. If you don't want coercion then
+explicitly provide C<< coerce => 0 >>.
+
+C<< coerce => sub { ... } >> is supported even for Moose and Mouse.
+
+=item C<< builder >> I<< ("1"|Str|CodeRef) >>
+
+MooX::Press supports the Moo-specific C<< builder => 1 >> and
+C<< builder => sub { ... } >> and will translate them if you're using
+Moose or Mouse.
+
+=item C<< trigger >> I<< ("1"|Str|CodeRef) >>
+
+MooX::Press supports the Moo-specific C<< trigger => 1 >> and
+C<< trigger => $methodname >> and will translate them if you're using
+Moose or Mouse.
+
+=item C<< clearer >> I<< ("1"|Str) >>
+
+MooX::Press supports the Moo-specific C<< clearer => 1 >> and
+will translate it if you're using Moose or Mouse.
 
 =back
 
