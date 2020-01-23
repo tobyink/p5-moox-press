@@ -545,6 +545,23 @@ sub _make_package {
 		}
 	}
 	
+	if (defined $opts{'import'}) {
+		my @imports = $opts{'import'}->$_handle_list;
+		while (@imports) {
+			my $import = shift @imports;
+			my @params;
+			if (is_HashRef($imports[0])) {
+				@params = %{ shift @imports };
+			}
+			elsif (is_ArrayRef($imports[0])) {
+				@params = @{ shift @imports };
+			}
+			require Import::Into;
+			eval "require $import";
+			$import->import::into($qname, @imports);
+		}
+	}
+	
 	if (ref $opts{'begin'}) {
 		$opts{'begin'}->($qname, $opts{is_role} ? 'role' : 'class');
 	}
@@ -1977,6 +1994,23 @@ Override C<begin> for this class and any child classes.
   );
 
 See L</Import Options>.
+
+=item C<< import >> I<< (OptList) >>
+
+Allows you to import packages into classes.
+
+  use MooX::Press (
+    prefix => 'Library',
+    class  => [
+      toolkit  => 'Moose',
+      import   => [ 'MooseX::StrictConstructor' ],
+      ...,
+    ],
+  );
+
+Note that the coderefs you pass to MooX::Press are evaluated in the caller
+namespace, so this isn't very useful if you're looking to import functions.
+It can be useful for many MooX, MooseX, and MouseX extensions though.
 
 =back
 
