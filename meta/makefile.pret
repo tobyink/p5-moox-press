@@ -12,7 +12,6 @@
 	:runtime-requirement    [ :on "MooX::Enumeration 0.010"^^:CpanId ];
 	:runtime-requirement    [ :on "Sub::HandlesVia 0.004"^^:CpanId ];
 	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
-	:runtime-requirement    [ :on "Try::Tiny"^^:CpanId ];
 	:test-recommendation    [ :on "Moose 2.12"^^:CpanId ];
 	:test-recommendation    [ :on "Mouse"^^:CpanId ];
 	:test-requirement       [ :on "Test::More 0.96"^^:CpanId ];

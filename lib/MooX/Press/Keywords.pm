@@ -41,10 +41,6 @@ sub confess {
 
 $EXPORT_TAGS{ 'util' } = [qw/ blessed confess /];
 
-use Try::Tiny;
-
-$EXPORT_TAGS{ 'try' } = [qw/ try catch finally /];
-
 push @EXPORT_OK, map @{$EXPORT_TAGS{$_}}, keys(%EXPORT_TAGS);
 
 my $orig = 'Type::Library'->can('import');
@@ -129,10 +125,6 @@ C<blessed> from L<Scalar::Util>.
 =item *
 
 C<confess> from L<Carp>.
-
-=item *
-
-L<Try::Tiny>.
 
 =back
 
