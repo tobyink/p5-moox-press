@@ -199,3 +199,9 @@
 		item "Allow `import` option to apply to class/role generators."^^Change;
 		item "MooX::Press::Keywords no longer imports Try::Tiny for you."^^Removal;
 	].
+
+`MooX-Press 0.030 cpan:TOBYINK`
+	issued  2020-01-23;
+	changeset [
+		item "Bugfix for `import`."^^Bugfix;
+	].
