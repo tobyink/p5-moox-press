@@ -862,7 +862,7 @@ sub generate_package {
 	
 	my %opts;
 	for my $key (qw/ extends with has can constant around before after
-		toolkit version authority mutable begin end requires /) {
+		toolkit version authority mutable begin end requires import /) {
 		if (exists $local_opts{$key}) {
 			$opts{$key} = delete $local_opts{$key};
 		}
