@@ -184,3 +184,12 @@
 	changeset [
 		item "Support for Sub::HandlesVia."^^Addition;
 	].
+
+
+`MooX-Press 0.028 cpan:TOBYINK`
+	issued  2020-01-23;
+	changeset [
+		item "Require Sub::HandlesVia 0.004."^^Packaging;
+		item "Add an `import` option."^^Addition;
+		item "Smooth over differences between `has` in Moo, Moose, and Mouse."^^Change;
+	].
