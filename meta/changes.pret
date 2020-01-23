@@ -205,3 +205,11 @@
 	changeset [
 		item "Bugfix for `import`."^^Bugfix;
 	].
+
+`MooX-Press 0.031 cpan:TOBYINK`
+	issued  2020-01-23;
+	changeset [
+		item "Add `optimize` feature for method signatures."^^Addition;
+		item "Fix broken signatures-as-coderefs feature."^^Bugfix;
+		item "Document signatures-as-coderefs feature."^^Documentation;
+	].
