@@ -1058,46 +1058,90 @@ sub install_methods {
 	my ($class, $methods) = @_;
 	for my $name (sort keys %$methods) {
 		no strict 'refs';
-		my ($coderef, $signature, $signature_style, $invocant_count, @curry);
+		my ($code, $signature, $signature_style, $invocant_count, @curry);
 		
 		if (is_CodeRef($methods->{$name})) {
-			$coderef = $methods->{$name};
-			$signature_style = 'code';
+			$code            = $methods->{$name};
+			$signature_style = 'none';
 		}
 		elsif (is_HashRef($methods->{$name})) {
-			$coderef   = $methods->{$name}{code};
+			$code      = $methods->{$name}{code};
 			$signature = $methods->{$name}{signature};
 			@curry     = @{ $methods->{$name}{curry} || [] };
 			$invocant_count  = exists($methods->{$name}{invocant_count}) ? $methods->{$name}{invocant_count} : 1;
-			$signature_style = $methods->{$name}{named} ? 'named' : 'positional';
+			$signature_style = is_CodeRef($signature)
+				? 'code'
+				: ($methods->{$name}{named} ? 'named' : 'positional');
 		}
 		
-		my $ok;
 		if ($signature) {
-			$signature_style eq 'code'
-				? CodeRef->assert_valid($signature)
-				: ArrayRef->assert_valid($signature);
-			
-			$ok = eval qq{
-				package $class;
-				my \$check;
-				sub $name :method {
-					my \@invocants = splice(\@_, 0, $invocant_count);
-					\$check ||= q($builder)->_build_method_signature_check(q($class), q($class\::$name), \$signature_style, \$signature, \\\@invocants);
-					\@_ = (\@invocants, \@curry, \&\$check);
-					goto \$coderef;
+			CodeRef->assert_valid($signature)  if $signature_style eq 'code';
+			ArrayRef->assert_valid($signature) if $signature_style eq 'named';
+			ArrayRef->assert_valid($signature) if $signature_style eq 'positional';
+		};
+		
+		my $optimized = 0;
+		my $checkcode = '&$check';
+		if ($signature and $methods->{$name}{optimize}) {
+			if (my $r = $builder->_optimize_signature($class, "$class\::$name", $signature_style, $signature)) {
+				$checkcode = $r;
+				++$optimized;
+			}
+		}
+		
+		my $subcode = sprintf(
+			q{
+				package %-49s  # package name
+				%-49s          # my $check variable to close over
+				sub %-49s      # method name
+				{
+					%-49s          # strip @invocants from @_ if necessary
+					%-49s          # build $check
+					%-49s          # reassemble @_ from @invocants, @curry, and &$check
+					%-49s          # run sub code
 				};
 				1;
-			};
-		}
-		else {
-			# Why use a wrapper? Because don't want to rename coderefs with Sub::Name.
-			# Why not rename? Because it could be installed into multiple packages.
-			$ok = eval "package $class; sub $name :method { goto \$coderef }; 1";
-		}
-		
-		$ok or $builder->croak("Could not create method $name in package $class: $@");
+			},
+			"$class;",
+			(($signature && !$optimized)
+				? 'my $check;'
+				: ''),
+			"$name :method",
+			($signature
+				? sprintf('my @invocants = splice(@_, 0, %d);', $invocant_count)
+				: ''),
+			(($signature && !$optimized)
+				? sprintf('$check = %s->_build_method_signature_check(%s, %s, %s, $signature, \\@invocants);', map(B::perlstring($_), $builder, $class, "$class\::$name", $signature_style))
+				: ''),
+			($signature
+				? (@curry ? sprintf('@_ = (@invocants, @curry, %s);', $checkcode) : sprintf('@_ = (@invocants, %s);', $checkcode))
+				: (@curry ? sprintf('splice(@_, %d, 0, @curry);', $invocant_count) : '')),
+			(is_CodeRef($code) ? 'goto $code' : do { (my $callcode = $code) =~ s/sub/do/; $callcode }),
+		);
+		eval($subcode)
+			or $builder->croak("Could not create method $name in package $class: $@");
 	}
+}
+
+sub _optimize_signature {
+	my $builder = shift;
+	my ($method_class, $method_name, $signature_style, $signature) = @_;
+	
+	return if $signature_style eq 'none';
+	return if $signature_style eq 'code';
+	
+	my @sig = @$signature;
+	require Type::Params;
+	my $global_opts = {};
+	$global_opts = shift(@sig) if is_HashRef($sig[0]) && !$sig[0]{slurpy};
+	$global_opts->{want_details} = 1;
+	
+	my $details = $builder->_build_method_signature_check($method_class, $method_name, $signature_style, [$global_opts, @sig]);
+	return if keys %{$details->{environment}};
+	return if $details->{source} =~ /return/;
+	
+	$details->{source} =~ /^sub \{(.+)\};$/s or return;
+	return "do { $1 }";
 }
 
 # need to partially parse stuff for Type::Params to look up type names
@@ -1105,9 +1149,10 @@ sub _build_method_signature_check {
 	my $builder = shift;
 	my ($method_class, $method_name, $signature_style, $signature) = @_;
 	my $type_library;
-	my @sig = @$signature;
 	
+	return sub { @_ } if $signature_style eq 'none';
 	return $signature if $signature_style eq 'code';
+	my @sig = @$signature;
 	
 	require Type::Params;
 	
@@ -2401,6 +2446,21 @@ Example with positional parameters:
 Methods with a mixture of named and positional parameters are not supported.
 If you really want such a method, don't provide a signature; just provide a
 coderef and manually unpack C<< @_ >>.
+
+B<< Advanced features: >>
+
+C<signature> may be a coderef, which is passed C<< @_ >> (minus invocants)
+and is expected to return a new C<< @_ >> in list context after checking
+and optionally coercing parameters.
+
+Setting C<< optimize => 1 >> tells MooX::Press to attempt to perform
+additional compile-time optimizations on the signature to make it slightly
+faster at runtime. (Sometimes it will find it's unable to optimize anything,
+so you've just wasted time at compile time.)
+
+C<code> can be a string of Perl code like C<< sub { ... } >> instead of
+a real coderef. This doesn't let you close over any variables, but if
+you can provide code this way, it might be slightly faster.
 
 =head2 Optimization Features
 
