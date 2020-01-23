@@ -558,7 +558,7 @@ sub _make_package {
 			}
 			require Import::Into;
 			eval "require $import";
-			$import->import::into($qname, @imports);
+			$import->import::into($qname, @params);
 		}
 	}
 	
