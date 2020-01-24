@@ -1068,21 +1068,23 @@ sub install_methods {
 	my %return;
 	for my $name (sort keys %$methods) {
 		no strict 'refs';
-		my ($code, $signature, $signature_style, $invocant_count, $is_coderef, @curry);
+		my ($code, $signature, $signature_style, $invocant_count, $is_coderef, $caller, @curry);
+		$caller = $class;
 		
 		if (is_CodeRef($methods->{$name})) {
 			$code            = $methods->{$name};
 			$signature_style = 'none';
 		}
 		elsif (is_HashRef($methods->{$name})) {
-			$code      = $methods->{$name}{code};
-			$signature = $methods->{$name}{signature};
-			@curry     = @{ $methods->{$name}{curry} || [] };
+			$code       = $methods->{$name}{code};
+			$signature  = $methods->{$name}{signature};
+			@curry      = @{ $methods->{$name}{curry} || [] };
 			$invocant_count  = exists($methods->{$name}{invocant_count}) ? $methods->{$name}{invocant_count} : 1;
 			$signature_style = is_CodeRef($signature)
 				? 'code'
 				: ($methods->{$name}{named} ? 'named' : 'positional');
 			$is_coderef = !!$methods->{$name}{lexical};
+			$caller     = $methods->{$name}{caller};
 		}
 		
 		if ($signature) {
@@ -1098,6 +1100,15 @@ sub install_methods {
 				$checkcode = $r;
 				++$optimized;
 			}
+		}
+		
+		my $callcode;
+		if (is_CodeRef($code)) {
+			$callcode = 'goto $code';
+		}
+		else {
+			($callcode = $code) =~ s/sub/do/;
+			$callcode = "package $caller; $callcode" if defined $caller;
 		}
 		
 		my $subcode = sprintf(
@@ -1127,7 +1138,7 @@ sub install_methods {
 			($signature
 				? (@curry ? sprintf('@_ = (@invocants, @curry, %s);', $checkcode) : sprintf('@_ = (@invocants, %s);', $checkcode))
 				: (@curry ? sprintf('splice(@_, %d, 0, @curry);', $invocant_count) : '')),
-			(is_CodeRef($code) ? 'goto $code' : do { (my $callcode = $code) =~ s/sub/do/; $callcode }),
+			$callcode,
 			($is_coderef ? '' : '1;'),
 		);
 		($return{$name} = eval($subcode))
