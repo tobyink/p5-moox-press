@@ -213,3 +213,9 @@
 		item "Fix broken signatures-as-coderefs feature."^^Bugfix;
 		item "Document signatures-as-coderefs feature."^^Documentation;
 	].
+
+`MooX-Press 0.032 cpan:TOBYINK`
+	issued  2020-01-24;
+	changeset [
+		item "MooX::Press->wrap_coderef utility."^^Addition;
+	].
