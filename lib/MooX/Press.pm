@@ -1053,12 +1053,22 @@ sub require_methods_mouse {
 	(Mouse::Util::find_meta($role) or $role->meta)->add_required_methods(sort keys %$methods);
 }
 
+sub wrap_coderef {
+	my $builder = shift;
+	my %method  = (@_==1) ? %{$_[0]} : @_;
+	my $qname   = delete($method{package}) || caller;
+	$method{lexical} = !!1;
+	my $return = $builder->install_methods($qname, { '__ANON__' => \%method });
+	$return->{'__ANON__'};
+}
+
 sub install_methods {
 	my $builder = shift;
 	my ($class, $methods) = @_;
+	my %return;
 	for my $name (sort keys %$methods) {
 		no strict 'refs';
-		my ($code, $signature, $signature_style, $invocant_count, @curry);
+		my ($code, $signature, $signature_style, $invocant_count, $is_coderef, @curry);
 		
 		if (is_CodeRef($methods->{$name})) {
 			$code            = $methods->{$name};
@@ -1072,6 +1082,7 @@ sub install_methods {
 			$signature_style = is_CodeRef($signature)
 				? 'code'
 				: ($methods->{$name}{named} ? 'named' : 'positional');
+			$is_coderef = !!$methods->{$name}{lexical};
 		}
 		
 		if ($signature) {
@@ -1100,13 +1111,13 @@ sub install_methods {
 					%-49s          # reassemble @_ from @invocants, @curry, and &$check
 					%-49s          # run sub code
 				};
-				1;
+				%s
 			},
 			"$class;",
 			(($signature && !$optimized)
 				? 'my $check;'
 				: ''),
-			"$name :method",
+			($is_coderef ? '' : "$name :method"),
 			($signature
 				? sprintf('my @invocants = splice(@_, 0, %d);', $invocant_count)
 				: ''),
@@ -1117,10 +1128,12 @@ sub install_methods {
 				? (@curry ? sprintf('@_ = (@invocants, @curry, %s);', $checkcode) : sprintf('@_ = (@invocants, %s);', $checkcode))
 				: (@curry ? sprintf('splice(@_, %d, 0, @curry);', $invocant_count) : '')),
 			(is_CodeRef($code) ? 'goto $code' : do { (my $callcode = $code) =~ s/sub/do/; $callcode }),
+			($is_coderef ? '' : '1;'),
 		);
-		eval($subcode)
+		($return{$name} = eval($subcode))
 			or $builder->croak("Could not create method $name in package $class: $@");
 	}
+	\%return;
 }
 
 sub _optimize_signature {
