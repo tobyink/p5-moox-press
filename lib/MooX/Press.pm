@@ -152,11 +152,11 @@ sub import {
 		$builder->do_coercions_for_class($pkg->[0], %opts, reg => $reg, %{$pkg->[1]});
 	}
 	
-	for my $pkg (@class_generators) {
-		$builder->make_class_generator($pkg->[0], %opts, %{$pkg->[1]});
-	}
 	for my $pkg (@role_generators) {
 		$builder->make_role_generator($pkg->[0], %opts, %{$pkg->[1]});
+	}
+	for my $pkg (@class_generators) {
+		$builder->make_class_generator($pkg->[0], %opts, %{$pkg->[1]});
 	}
 	for my $pkg (@roles) {
 		$builder->make_role($pkg->[0], %opts, %{$pkg->[1]});
