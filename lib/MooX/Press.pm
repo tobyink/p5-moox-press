@@ -19,6 +19,7 @@ my @delete_keys = qw(
 	has
 	with
 	extends
+	overload
 	factory
 	coerce
 	around
@@ -740,6 +741,13 @@ sub _make_package {
 	
 	unless ($opts{is_role}) {
 		
+		if ($opts{overload}) {
+			my @overloads = $opts{overload}->$_handle_list;
+			require overload;
+			require Import::Into;
+			'overload'->import::into($qname, @overloads);
+		}
+		
 		if ($toolkit eq 'Moose' && !$opts{'mutable'}) {
 			require Moose::Util;
 			Moose::Util::find_meta($qname)->make_immutable;
@@ -862,7 +870,7 @@ sub generate_package {
 	
 	my %opts;
 	for my $key (qw/ extends with has can constant around before after
-		toolkit version authority mutable begin end requires import /) {
+		toolkit version authority mutable begin end requires import overload /) {
 		if (exists $local_opts{$key}) {
 			$opts{$key} = delete $local_opts{$key};
 		}
@@ -2081,6 +2089,10 @@ Note that the coderefs you pass to MooX::Press are evaluated in the caller
 namespace, so this isn't very useful if you're looking to import functions.
 It can be useful for many MooX, MooseX, and MouseX extensions though.
 
+=item C<< overload >> I<< (HashRef) >>
+
+Options to pass to C<< use overload >>.
+
 =back
 
 =head3 Role Options
@@ -2194,6 +2206,10 @@ This option is silently ignored.
 This option is silently ignored.
 
 =item C<< mutable >> I<< (Any) >>
+
+This option is silently ignored.
+
+=item C<< overload >> I<< (Any) >>
 
 This option is silently ignored.
 
