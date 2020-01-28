@@ -219,3 +219,12 @@
 	changeset [
 		item "MooX::Press->wrap_coderef utility."^^Addition;
 	].
+
+`MooX-Press 0.033 cpan:TOBYINK`
+	issued  2020-01-28;
+	changeset [
+		item "Sub::MultiMethod support (optional dependency)."^^Addition;
+		item "Process role generators before class generators."^^Change;
+		item "Build roles in an intelligent order."^^Change;
+		item "Support `overload` in classes."^^Addition;
+	].
