@@ -735,6 +735,15 @@ sub _make_package {
 			$shv_toolkit->install_delegations($shv_data) if $shv_data;
 		}
 	}
+	
+	if ($opts{multimethod}) {
+		my $method = $opts{toolkit_install_multimethod} || 'install_multimethod';
+		my @mm = $opts{multimethod}->$_handle_list_add_nulls;
+		while (@mm) {
+			my ($method_name, $method_spec) = splice(@mm, 0, 2);
+			$builder->$method($qname, $opts{is_role}?'role':'class', $method_name, $method_spec);
+		}
+	}
 
 	if ($opts{is_role}) {
 		my $method   = $opts{toolkit_require_methods} || ("require_methods_".lc $toolkit);
@@ -1020,6 +1029,30 @@ sub extend_class_mouse {
 	(Mouse::Util::find_meta($class) or $class->meta)->superclasses(@$isa);
 }
 
+sub install_multimethod {
+	my $builder = shift;
+	my ($target, $kind, $method_name, $method_spec) = @_;
+	
+	HashRef->($method_spec);
+	Ref->($method_spec->{signature});
+	CodeRef->($method_spec->{code});
+	
+	my $new_sig = $builder->_build_method_signature_check(
+		$target,
+		$method_name,
+		CodeRef->check($method_spec->{signature})
+			? 'code'
+			: ($method_spec->{named} ? 'named' : 'positional'),
+		$method_spec->{signature},
+		undef,
+		1,
+	);
+	$method_spec->{signature} = $new_sig;
+	
+	require Sub::MultiMethod;
+	'Sub::MultiMethod'->install_candidate($target, $method_name, no_dispatcher=>($kind eq 'role'), %$method_spec);
+}
+
 {
 	my $_process_roles = sub {
 		my ($r, $tk) = @_;
@@ -1034,26 +1067,42 @@ sub extend_class_mouse {
 		} @$r;
 	};
 	
+	my $_maybe_do_multimethods = sub {
+		my $tk = 'Sub::MultiMethod';
+		if ($INC{'Sub/MultiMethod.pm'} and $tk->can('copy_package_candidates')) {
+			my ($target, @sources) = @_;
+			$tk->copy_package_candidates(@sources => $target);
+			$tk->install_missing_dispatchers($target);
+		}
+		return;
+	};
+	
 	sub apply_roles_moo {
 		my $builder = shift;
 		my ($class, $roles) = @_;
 		my $helper = $builder->_get_moo_helper($class, 'with');
-		$helper->($roles->$_process_roles('Moo'));
+		my @roles = $roles->$_process_roles('Moo');
+		$helper->(@roles);
+		$class->$_maybe_do_multimethods(@roles);
 	}
 
 	sub apply_roles_moose {
 		my $builder = shift;
 		my ($class, $roles) = @_;
 		require Moose::Util;
-		Moose::Util::ensure_all_roles($class, $roles->$_process_roles('Moose'));
+		my @roles = $roles->$_process_roles('Moose');
+		Moose::Util::ensure_all_roles($class, @roles);
+		$class->$_maybe_do_multimethods(@roles);
 	}
 
 	sub apply_roles_mouse {
 		my $builder = shift;
 		my ($class, $roles) = @_;
 		require Mouse::Util;
+		my @roles = $roles->$_process_roles('Mouse');
 		# this can double-apply roles? :(
-		Mouse::Util::apply_all_roles($class, $roles->$_process_roles('Mouse'));
+		Mouse::Util::apply_all_roles($class, @roles);
+		$class->$_maybe_do_multimethods(@roles);
 	}
 }
 
@@ -1196,7 +1245,7 @@ sub _optimize_signature {
 # need to partially parse stuff for Type::Params to look up type names
 sub _build_method_signature_check {
 	my $builder = shift;
-	my ($method_class, $method_name, $signature_style, $signature) = @_;
+	my ($method_class, $method_name, $signature_style, $signature, $invocants, $gimme_list) = @_;
 	my $type_library;
 	
 	return sub { @_ } if $signature_style eq 'none';
@@ -1271,6 +1320,7 @@ sub _build_method_signature_check {
 	
 	my $next = $is_named ? \&Type::Params::compile_named_oo : \&Type::Params::compile;
 	@_ = ($global_opts, @params);
+	return [@_] if $gimme_list;
 	goto($next);
 }
 
@@ -1745,6 +1795,29 @@ preference.
   
   package main;
   MyApp->new_foo()->bar();
+
+=item C<< multimethod >> I<< (ArrayRef) >>
+
+An arrayref of name-spec pairs suitable for passing to
+L<Sub::MultiMethod>.
+
+  package MyApp;
+  use MooX::Press (
+    class => [
+      'Foo' => {
+         multimethod => [
+           'bar' => {
+             signature => [ 'HashRef' ],
+             code      => sub { my ($self, $hash)  = @_; ... },
+           },
+           'bar' => {
+             signature => [ 'ArrayRef' ],
+             code      => sub { my ($self, $array) = @_; ... },
+           },
+         ],
+       },
+    ],
+  );
 
 =item C<< constant >> I<< (HashRef[Item]) >>
 
