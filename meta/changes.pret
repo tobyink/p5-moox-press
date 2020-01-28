@@ -228,3 +228,9 @@
 		item "Build roles in an intelligent order."^^Change;
 		item "Support `overload` in classes."^^Addition;
 	].
+
+`MooX-Press 0.034 cpan:TOBYINK`
+	issued  2020-01-28;
+	changeset [
+		item "Skip trying to just-in-time look for a role definition if the role ends in a question mark; that role will already be built just-in-time."^^Bugfix;
+	].
