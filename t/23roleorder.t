@@ -18,12 +18,12 @@ use MooX::Press (
 		},
 		'Role3' => {
 			can => {
-				'foo' => sub { 666 }, 
+				'foo' => sub { 666 },
 			},
 		},
 		'Role4' => {
 			can => {
-				'bar' => sub { 999 }, 
+				'bar' => sub { 999 },
 			},
 		},
 	],
