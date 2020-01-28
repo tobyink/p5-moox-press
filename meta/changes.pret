@@ -234,3 +234,9 @@
 	changeset [
 		item "Skip trying to just-in-time look for a role definition if the role ends in a question mark; that role will already be built just-in-time."^^Bugfix;
 	].
+
+`MooX-Press 0.035 cpan:TOBYINK`
+	issued  2020-01-28;
+	changeset [
+		item "Don't install multimethod dispatchers into roles."^^Bugfix;
+	].
