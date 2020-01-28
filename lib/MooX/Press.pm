@@ -96,6 +96,8 @@ sub import {
 	}
 	for my $pkg (@roles) {
 		$pkg->[1] = { $pkg->[1]->$_handle_list };
+		# qualify names in role list early
+		$pkg->[0] = '::' . $builder->qualify_name($pkg->[0], exists($pkg->[1]{prefix})?$pkg->[1]{prefix}:$opts{prefix});
 		$builder->munge_role_options($pkg->[1], \%opts);
 	}
 	for my $pkg (@classes) {
@@ -160,10 +162,10 @@ sub import {
 		$builder->make_class_generator($pkg->[0], %opts, %{$pkg->[1]});
 	}
 	for my $pkg (@roles) {
-		$builder->make_role($pkg->[0], %opts, %{$pkg->[1]});
+		$builder->make_role($pkg->[0], _parent_opts => \%opts, _roles => \@roles, %opts, %{$pkg->[1]});
 	}
 	for my $pkg (@classes) {
-		$builder->make_class($pkg->[0], %opts, %{$pkg->[1]});
+		$builder->make_class($pkg->[0], _parent_opts => \%opts, _roles => \@roles, %opts, %{$pkg->[1]});
 	}
 	
 	%_cached_moo_helper = ();  # cleanups
@@ -509,7 +511,10 @@ sub _make_package {
 	}->{lc $opts{toolkit}} || $opts{toolkit};
 	
 	if ($opts{is_role}) {
-		eval "package $qname; use $toolkit\::Role; use namespace::autoclean; 1"
+		no strict 'refs';
+		return if ${"$qname\::BUILT"};
+		
+		eval "package $qname; use $toolkit\::Role; use namespace::autoclean; our \$BUILT = 1"
 			or $builder->croak("Could not create package $qname: $@");
 	}
 	else {
@@ -579,7 +584,19 @@ sub _make_package {
 					push @processed, $gen->generate_package(@args);
 				}
 				else {
-					push @processed, $builder->qualify_name(shift(@roles), $opts{prefix});
+					my $role_qname = $builder->qualify_name(shift(@roles), $opts{prefix});
+					push @processed, $role_qname;
+					no strict 'refs';
+					if ( ! ${"$role_qname\::BUILT"} ) {
+						my ($role_dfn) = grep { $_->[0] eq "::$role_qname" } @{$opts{_roles}};
+						$builder->make_role(
+							"::$role_qname",
+							_parent_opts => $opts{_parent_opts},
+							_roles       => $opts{_roles},
+							%{ $opts{_parent_opts} },
+							%{ $role_dfn->[1] },
+						) if $role_dfn;
+					}
 				}
 			}
 			$builder->$method($qname, \@processed);
