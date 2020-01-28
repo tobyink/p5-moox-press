@@ -587,7 +587,7 @@ sub _make_package {
 					my $role_qname = $builder->qualify_name(shift(@roles), $opts{prefix});
 					push @processed, $role_qname;
 					no strict 'refs';
-					if ( ! ${"$role_qname\::BUILT"} ) {
+					if ( $role_qname !~ /\?$/ and not ${"$role_qname\::BUILT"} ) {
 						my ($role_dfn) = grep { $_->[0] eq "::$role_qname" } @{$opts{_roles}};
 						$builder->make_role(
 							"::$role_qname",
