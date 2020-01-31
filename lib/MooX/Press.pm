@@ -5,7 +5,7 @@ use warnings;
 package MooX::Press;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.035';
+our $VERSION   = '0.036';
 
 use Types::Standard 1.008003 -is, -types;
 use Types::TypeTiny qw(ArrayLike HashLike);
