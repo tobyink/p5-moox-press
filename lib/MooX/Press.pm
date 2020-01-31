@@ -805,6 +805,7 @@ sub _make_package {
 		}
 		
 		if ($opts{abstract}) {
+			warn "Cleaning up constructor from abstract class $qname";
 			'namespace::clean'->clean_subroutines($qname, 'new');
 			my $orig_can = $qname->can('can');
 			$builder->install_methods($qname, {
