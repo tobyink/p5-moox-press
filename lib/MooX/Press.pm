@@ -29,6 +29,7 @@ my @delete_keys = qw(
 	can
 	type_library_can
 	factory_package_can
+	abstract
 );
 
 my $_handle_list = sub {
@@ -404,6 +405,10 @@ sub _do_coercions {
 	my $qname = $builder->qualify_name($name, $opts{prefix}, $opts{extends});
 	
 	if ($opts{coerce}) {
+		if ($opts{abstract}) {
+			require Carp;
+			Carp::croak("abstract class $qname cannot have coercions")
+		}
 		my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
 		my @coercions = @{$opts{'coerce'} || []};
 		
@@ -450,6 +455,26 @@ sub _do_coercions {
 sub make_role {
 	my $builder = shift;
 	my ($name, %opts) = @_;
+	
+	if ($opts{interface}) {
+		for my $key (qw/ can before after around has multimethod /) {
+			if ($opts{$key}) {
+				require Carp;
+				my $qname = $builder->qualify_name($name, $opts{prefix});
+				Carp::croak("interface $qname cannot have $key");
+			}
+		}
+	}
+
+	for my $key (qw/ abstract extends subclass factory overload /) {
+		if ($opts{$key}) {
+			require Carp;
+			my $qname = $builder->qualify_name($name, $opts{prefix});
+			my $kind  = $opts{interface} ? 'interface' : 'role';
+			Carp::croak("$kind $qname cannot have $key");
+		}
+	}
+
 	$builder->_make_package($name, %opts, is_role => 1);
 }
 
@@ -501,7 +526,7 @@ sub _make_package {
 	my $tn = $builder->type_name($qname, $opts{prefix});
 	
 	if (!exists $opts{factory}) {
-		$opts{factory} = 'new_' . lc $tn;
+		$opts{factory} = $opts{abstract} ? undef : sprintf('new_%s', lc $tn);
 	}
 	
 	my $toolkit = {
@@ -779,10 +804,23 @@ sub _make_package {
 			Moose::Util::find_meta($qname)->make_immutable;
 		}
 		
+		if ($opts{abstract}) {
+			'namespace::clean'->clean_subroutines($qname, 'new');
+			my $orig_can = $qname->can('can');
+			$builder->install_methods($qname, {
+				can => sub { return if $_[0] eq $qname && $_[1] eq 'new'; goto $orig_can },
+				new => sub { require Carp; Carp::croak('abstract class') },
+			});
+		}
+		
 		if (defined $opts{'factory_package'} or not exists $opts{'factory_package'}) {
 			my $fpackage = $opts{'factory_package'} || $opts{'caller'};
 			if ($opts{'factory'}) {
 				my @methods = $opts{'factory'}->$_handle_list;
+				if ($opts{abstract} and @methods) {
+					require Carp;
+					Carp::croak("abstract class $qname cannot have factory");
+				}
 				while (@methods) {
 					my @method_names;
 					push(@method_names, shift @methods)
@@ -2183,6 +2221,12 @@ It can be useful for many MooX, MooseX, and MouseX extensions though.
 
 Options to pass to C<< use overload >>.
 
+=item C<< abstract >> I<< (Bool) >>
+
+Marks the class as abstract. Abstract classes cannot have factories or
+coercions, and do not have a constuctor. They may be inherited from though.
+It is usually better to use roles.
+
 =back
 
 =head3 Role Options
@@ -2289,11 +2333,11 @@ Or force MooX::Press to happen at runtime instead of compile time.
   
 =item C<< subclass >> I<< (Any) >>
 
-This option is silently ignored.
+This option is not allowed.
 
 =item C<< factory >> I<< (Any) >>
 
-This option is silently ignored.
+This option is not allowed.
 
 =item C<< mutable >> I<< (Any) >>
 
@@ -2301,7 +2345,21 @@ This option is silently ignored.
 
 =item C<< overload >> I<< (Any) >>
 
-This option is silently ignored.
+This option is not allowed.
+
+=item C<< abstract >> I<< (Any) >>
+
+This option is not allowed.
+
+=item C<< interface >> I<< (Bool) >>
+
+An interface is a "light" role.
+
+If a role is marked as an interface, it must not have any C<can>, C<before>,
+C<after>, C<around>, C<has>, or C<multimethod> options. C<requires>,
+C<constant>, and C<type_name> are allowed. C<with> is allowed; you should
+only use C<with> to compose other interfaces (not full roles) though this
+is not currently enforced.
 
 =back
 
