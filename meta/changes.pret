@@ -248,3 +248,9 @@
 		item "Interfaces."^^Addition;
 		item "Using class-specific things like `factory` in a role now results in an error instead of being silently ignored."^^Change;
 	].
+
+`MooX-Press 0.037 cpan:TOBYINK`
+	issued  2020-01-31;
+	changeset [
+		item "Process `with` much later to ensure that methods (including accessors, delegated methods, multimethods, and constants) have been installed which might be needed to satisfy role requirements."^^Change;
+	].
