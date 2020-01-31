@@ -810,11 +810,11 @@ sub _make_package {
 			'namespace::clean'->clean_subroutines($qname, 'new', 'BUILD');
 			$builder->install_methods($qname, {
 				can   => sub {
-					return if $_[0] eq $qname && $_[1] eq 'new';
+					if ((ref($_[0])||$_[0]) eq $qname and $_[1] eq 'new') { return; };
 					goto $orig_can;
 				},
 				BUILD => sub {
-					if (ref($_[0]) eq $qname) { require Carp; Carp::croak('abstract class') };
+					if (ref($_[0]) eq $qname) { require Carp; Carp::croak('abstract class'); };
 					goto $orig_BUILD;
 				},
 			});
