@@ -805,12 +805,18 @@ sub _make_package {
 		}
 		
 		if ($opts{abstract}) {
-			warn "Cleaning up constructor from abstract class $qname";
-			'namespace::clean'->clean_subroutines($qname, 'new');
-			my $orig_can = $qname->can('can');
+			my $orig_can   = $qname->can('can');
+			my $orig_BUILD = do { no strict 'refs'; exists(&{"$qname\::BUILD"}) ? \&{"$qname\::BUILD"} : sub {} };
+			'namespace::clean'->clean_subroutines($qname, 'new', 'BUILD');
 			$builder->install_methods($qname, {
-				can => sub { return if $_[0] eq $qname && $_[1] eq 'new'; goto $orig_can },
-				new => sub { require Carp; Carp::croak('abstract class') },
+				can   => sub {
+					return if $_[0] eq $qname && $_[1] eq 'new';
+					goto $orig_can;
+				},
+				BUILD => sub {
+					if (ref($_[0]) eq $qname) { require Carp; Carp::croak('abstract class') };
+					goto $orig_BUILD;
+				},
 			});
 		}
 		

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Carp::Always;
+use Test::Fatal;
 
 use MooX::Press (
 	prefix => 'MyApp',
@@ -20,6 +20,11 @@ my $obj = MyApp->new_bar;
 
 isa_ok($obj, 'MyApp::Bar');
 isa_ok($obj, 'MyApp::Foo');
+
+like(
+	exception { 'MyApp::Foo'->new },
+	qr/abstract class/i,
+);
 
 done_testing;
 
