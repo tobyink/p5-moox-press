@@ -596,38 +596,14 @@ sub _make_package {
 	if (ref $opts{'begin'}) {
 		$opts{'begin'}->($qname, $opts{is_role} ? 'role' : 'class');
 	}
-	
-	{
-		my $method = $opts{toolkit_apply_roles} || ("apply_roles_".lc $toolkit);
-		my @roles = $opts{with}->$_handle_list;
-		if (@roles) {
-			my @processed;
-			while (@roles) {
-				if (@roles > 1 and ref($roles[1])) {
-					my $gen  = $builder->qualify_name(shift(@roles), $opts{prefix});
-					my @args = shift(@roles)->$_handle_list;
-					push @processed, $gen->generate_package(@args);
-				}
-				else {
-					my $role_qname = $builder->qualify_name(shift(@roles), $opts{prefix});
-					push @processed, $role_qname;
-					no strict 'refs';
-					if ( $role_qname !~ /\?$/ and not ${"$role_qname\::BUILT"} ) {
-						my ($role_dfn) = grep { $_->[0] eq "::$role_qname" } @{$opts{_roles}};
-						$builder->make_role(
-							"::$role_qname",
-							_parent_opts => $opts{_parent_opts},
-							_roles       => $opts{_roles},
-							%{ $opts{_parent_opts} },
-							%{ $role_dfn->[1] },
-						) if $role_dfn;
-					}
-				}
-			}
-			$builder->$method($qname, $opts{is_role}?'role':'class', \@processed);
-		}
+
+	if ($opts{overload}) {
+		my @overloads = $opts{overload}->$_handle_list;
+		require overload;
+		require Import::Into;
+		'overload'->import::into($qname, @overloads);
 	}
-	
+
 	my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
 	{
 		my %methods;
@@ -760,7 +736,7 @@ sub _make_package {
 			$shv_toolkit->install_delegations($shv_data) if $shv_data;
 		}
 	}
-	
+
 	if ($opts{multimethod}) {
 		my $method = $opts{toolkit_install_multimethod} || 'install_multimethod';
 		my @mm = $opts{multimethod}->$_handle_list_add_nulls;
@@ -770,6 +746,37 @@ sub _make_package {
 		}
 	}
 
+	{
+		my $method = $opts{toolkit_apply_roles} || ("apply_roles_".lc $toolkit);
+		my @roles = $opts{with}->$_handle_list;
+		if (@roles) {
+			my @processed;
+			while (@roles) {
+				if (@roles > 1 and ref($roles[1])) {
+					my $gen  = $builder->qualify_name(shift(@roles), $opts{prefix});
+					my @args = shift(@roles)->$_handle_list;
+					push @processed, $gen->generate_package(@args);
+				}
+				else {
+					my $role_qname = $builder->qualify_name(shift(@roles), $opts{prefix});
+					push @processed, $role_qname;
+					no strict 'refs';
+					if ( $role_qname !~ /\?$/ and not ${"$role_qname\::BUILT"} ) {
+						my ($role_dfn) = grep { $_->[0] eq "::$role_qname" } @{$opts{_roles}};
+						$builder->make_role(
+							"::$role_qname",
+							_parent_opts => $opts{_parent_opts},
+							_roles       => $opts{_roles},
+							%{ $opts{_parent_opts} },
+							%{ $role_dfn->[1] },
+						) if $role_dfn;
+					}
+				}
+			}
+			$builder->$method($qname, $opts{is_role}?'role':'class', \@processed);
+		}
+	}
+	
 	if ($opts{is_role}) {
 		my $method   = $opts{toolkit_require_methods} || ("require_methods_".lc $toolkit);
 		my %requires = $opts{requires}->$_handle_list_add_nulls;
@@ -791,13 +798,6 @@ sub _make_package {
 	}
 	
 	unless ($opts{is_role}) {
-		
-		if ($opts{overload}) {
-			my @overloads = $opts{overload}->$_handle_list;
-			require overload;
-			require Import::Into;
-			'overload'->import::into($qname, @overloads);
-		}
 		
 		if ($toolkit eq 'Moose' && !$opts{'mutable'}) {
 			require Moose::Util;
