@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Carp::Always;
 
 use MooX::Press (
 	prefix => 'MyApp',
