@@ -5,7 +5,7 @@ use warnings;
 package MooX::Press;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.039';
+our $VERSION   = '0.038';
 
 use Types::Standard 1.008003 -is, -types;
 use Types::TypeTiny qw(ArrayLike HashLike);
@@ -1185,9 +1185,6 @@ sub install_methods {
 	my $builder = shift;
 	my ($class, $methods) = @_;
 	my %return;
-	
-	use Data::Dumper;
-	print Dumper($methods);
 	
 	for my $name (sort keys %$methods) {
 		no strict 'refs';
