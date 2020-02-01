@@ -1185,6 +1185,10 @@ sub install_methods {
 	my $builder = shift;
 	my ($class, $methods) = @_;
 	my %return;
+	
+	use Data::Dumper;
+	print Dumper($methods);
+	
 	for my $name (sort keys %$methods) {
 		no strict 'refs';
 		my ($code, $signature, $signature_style, $invocant_count, $is_coderef, $caller, @curry);
@@ -1252,7 +1256,7 @@ sub install_methods {
 				? sprintf('my @invocants = splice(@_, 0, %d);', $invocant_count)
 				: ''),
 			(($signature && !$optimized)
-				? sprintf('$check = %s->_build_method_signature_check(%s, %s, %s, $signature, \\@invocants);', map(B::perlstring($_), $builder, $class, "$class\::$name", $signature_style))
+				? sprintf('$check ||= %s->_build_method_signature_check(%s, %s, %s, $signature, \\@invocants);', map(B::perlstring($_), $builder, $class, "$class\::$name", $signature_style))
 				: ''),
 			($signature
 				? (@curry ? sprintf('@_ = (@invocants, @curry, %s);', $checkcode) : sprintf('@_ = (@invocants, %s);', $checkcode))
