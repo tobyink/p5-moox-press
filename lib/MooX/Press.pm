@@ -1040,8 +1040,6 @@ sub _process_enum_moose {
 sub make_attribute_mouse {
 	my $builder = shift;
 	my ($class, $attribute, $spec) = @_;
-	use Data::Dumper;
-	print Dumper($spec);
 	if (is_Object($spec->{isa}) and $spec->{isa}->isa('Type::Tiny::Enum') and $spec->{handles}) {
 		$builder->_process_enum_mouse(@_);
 	}
