@@ -266,3 +266,9 @@
 	changeset [
 		item "In the last few releases (since 0.032?), method signatures were mistakenly being recompiled every method call, which was SLOW."^^Bugfix;
 	].
+
+`MooX-Press 0.040 cpan:TOBYINK`
+	issued  2020-02-01;
+	changeset [
+		item "Remove some Data::Dumper stuff mistakenly included in last release."^^Bugfix;
+	].
