@@ -260,3 +260,9 @@
 	changeset [
 		item "Abstract base classes throw exceptions from `BUILD` instead of `new`."^^Change;
 	].
+
+`MooX-Press 0.039 cpan:TOBYINK`
+	issued  2020-02-01;
+	changeset [
+		item "In the last few releases (since 0.032?), method signatures were mistakenly being recompiled every method call, which was SLOW."^^Bugfix;
+	].
