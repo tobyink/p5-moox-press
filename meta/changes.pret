@@ -254,3 +254,9 @@
 	changeset [
 		item "Process `with` much later to ensure that methods (including accessors, delegated methods, multimethods, and constants) have been installed which might be needed to satisfy role requirements."^^Change;
 	].
+
+`MooX-Press 0.038 cpan:TOBYINK`
+	issued  2020-02-01;
+	changeset [
+		item "Abstract base classes throw exceptions from `BUILD` instead of `new`."^^Change;
+	].
