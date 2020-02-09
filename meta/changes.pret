@@ -272,3 +272,10 @@
 	changeset [
 		item "Remove some Data::Dumper stuff mistakenly included in last release."^^Bugfix;
 	].
+
+`MooX-Press 0.041 cpan:TOBYINK`
+	issued  2020-02-09;
+	changeset [
+		item "Factory packages now have a `qualify` method allowing them to translate unprefixed class names to fully-qualified ones."^^Addition;
+		item "MooX::XSConstructor is loaded and used if it's installed."^^Addition;
+	].
