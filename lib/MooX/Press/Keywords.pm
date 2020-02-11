@@ -34,7 +34,7 @@ $EXPORT_TAGS{ 'privacy' } = [qw/ ro rw rwp lazy /];
 
 use Scalar::Util qw( blessed );
 sub confess {
-	@_ = sprintf(shift, @_);
+	@_ = sprintf(shift, @_) if @_ > 1;
 	require Carp;
 	goto \&Carp::confess;
 }
