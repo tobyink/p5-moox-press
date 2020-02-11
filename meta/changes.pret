@@ -279,3 +279,10 @@
 		item "Factory packages now have a `qualify` method allowing them to translate unprefixed class names to fully-qualified ones."^^Addition;
 		item "MooX::XSConstructor is loaded and used if it's installed."^^Addition;
 	].
+
+`MooX-Press 0.042 cpan:TOBYINK`
+	issued  2020-02-11;
+	changeset [
+		item "The `confess` exported by MooX::Press::Keywords no longer passes a single argument through sprintf; only calling sprintf when multiple arguments are given."^^Change;
+		item "If a signature includes `head` and `tail` options, reify any string type constraints found there. This feature assumes you're using Type::Params 1.009002 or above."^^Change;
+	].
