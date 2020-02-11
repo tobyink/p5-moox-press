@@ -1370,7 +1370,7 @@ sub _build_method_signature_check {
 	for my $position (qw( head tail )) {
 		if (ref $global_opts->{$position}) {
 			require Type::Params;
-			'Type::Params'->VERSION(1.009002);		
+			'Type::Params'->VERSION(1.009002);
 			$reg ||= do {
 				require Type::Registry;
 				'Type::Registry'->for_class($method_class);
@@ -1392,7 +1392,7 @@ sub _build_method_signature_check {
 				}
 				else {
 					$reg->lookup($type);
-				}			
+				}
 			} @{$global_opts->{$position}} ];
 		}
 	}
