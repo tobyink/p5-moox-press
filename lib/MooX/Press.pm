@@ -878,7 +878,7 @@ sub _make_package {
 		$opts{'end'}->($qname, $opts{is_role} ? 'role' : 'class');
 	}
 	
-	if ($opts{type_library}) {
+	if ($opts{type_library} and $opts{type_name}) {
 		my $mytype = $opts{type_library}->get_type_for_package($opts{'is_role'} ? 'role' : 'class', $qname);
 		$mytype->coercion->freeze if $mytype;
 	}
@@ -1365,6 +1365,36 @@ sub _build_method_signature_check {
 				? ($name, $type, $hide_opts?():($opts))
 				: (       $type, $hide_opts?():($opts))
 		);
+	}
+	
+	for my $position (qw( head tail )) {
+		if (ref $global_opts->{$position}) {
+			require Type::Params;
+			'Type::Params'->VERSION(1.009002);		
+			$reg ||= do {
+				require Type::Registry;
+				'Type::Registry'->for_class($method_class);
+			};
+			$global_opts->{$position} = [map {
+				my $type = $_;
+				if (ref $type) {
+					$type;
+				}
+				elsif ($type =~ /^\%/) {
+					HashRef->of(
+						$reg->lookup(substr($type, 1))
+					);
+				}
+				elsif ($type =~ /^\@/) {
+					ArrayRef->of(
+						$reg->lookup(substr($type, 1))
+					);
+				}
+				else {
+					$reg->lookup($type);
+				}			
+			} @{$global_opts->{$position}} ];
+		}
 	}
 	
 	my $next = $is_named ? \&Type::Params::compile_named_oo : \&Type::Params::compile;
