@@ -286,3 +286,11 @@
 		item "The `confess` exported by MooX::Press::Keywords no longer passes a single argument through sprintf; only calling sprintf when multiple arguments are given."^^Change;
 		item "If a signature includes `head` and `tail` options, reify any string type constraints found there. This feature assumes you're using Type::Params 1.009002 or above."^^Change;
 	].
+
+`MooX-Press 0.043 cpan:TOBYINK`
+	issued  2020-02-12;
+	changeset [
+		item "If methods or method modifiers were given as a hashref rather than a coderef, MooX::Press would assume that meant there was a signature and later complain about the signature being undef, but there are other reasons to sometimes give a method or method modifier as a hashref, so this assumption is no longer made."^^Bugfix;
+		item "MooX::Press::keywords now exports `bare` like `rw`, `ro`, `rwp`, and `lazy`."^^Addition;
+		item "Test that bare attributes work."^^Tests;
+	].
