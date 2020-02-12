@@ -29,8 +29,9 @@ sub ro   ()   { 'ro'   }
 sub rw   ()   { 'rw'   }
 sub rwp  ()   { 'rwp'  }
 sub lazy ()   { 'lazy' }
+sub bare ()   { 'bare' }
 
-$EXPORT_TAGS{ 'privacy' } = [qw/ ro rw rwp lazy /];
+$EXPORT_TAGS{ 'privacy' } = [qw/ ro rw rwp lazy bare /];
 
 use Scalar::Util qw( blessed );
 sub confess {
@@ -116,7 +117,7 @@ C<true> and C<false> boolean constants.
 
 =item *
 
-C<ro>, C<rw>, C<rwp>, and C<lazy> string constants.
+C<ro>, C<rw>, C<rwp>, C<lazy>, and C<bare> string constants.
 
 =item *
 
