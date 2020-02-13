@@ -294,3 +294,10 @@
 		item "MooX::Press::keywords now exports `bare` like `rw`, `ro`, `rwp`, and `lazy`."^^Addition;
 		item "Test that bare attributes work."^^Tests;
 	].
+
+`MooX-Press 0.044 cpan:TOBYINK`
+	issued  2020-02-12;
+	changeset [
+		item "Make Sub::MultiMethod required rather than an optional dependency, so that other modules using MooX::Press and MooX::Pression don't need to depend on it explicitly."^^Packaging;
+		item "Bump minimum required version of Sub::HandlesVia."^^Packaging;
+	].
