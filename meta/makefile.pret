@@ -10,7 +10,8 @@
 	:runtime-requirement    [ :on "namespace::autoclean"^^:CpanId ];
 	:runtime-requirement    [ :on "Moo 1.006"^^:CpanId ];
 	:runtime-requirement    [ :on "MooX::Enumeration 0.010"^^:CpanId ];
-	:runtime-requirement    [ :on "Sub::HandlesVia 0.004"^^:CpanId ];
+	:runtime-requirement    [ :on "Sub::HandlesVia 0.013"^^:CpanId ];
+	:runtime-requirement    [ :on "Sub::MultiMethod 0.008"^^:CpanId ];
 	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
 	:test-recommendation    [ :on "Moose 2.12"^^:CpanId ];
 	:test-recommendation    [ :on "Mouse"^^:CpanId ];
