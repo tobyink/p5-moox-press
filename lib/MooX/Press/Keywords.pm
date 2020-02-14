@@ -25,13 +25,14 @@ sub false ()   { !!0 }
 
 $EXPORT_TAGS{ 'booleans' } = [qw/ true false /];
 
-sub ro   ()   { 'ro'   }
-sub rw   ()   { 'rw'   }
-sub rwp  ()   { 'rwp'  }
-sub lazy ()   { 'lazy' }
-sub bare ()   { 'bare' }
+sub ro   ()    { 'ro'      }
+sub rw   ()    { 'rw'      }
+sub rwp  ()    { 'rwp'     }
+sub lazy ()    { 'lazy'    }
+sub bare ()    { 'bare'    }
+sub private () { 'private' }
 
-$EXPORT_TAGS{ 'privacy' } = [qw/ ro rw rwp lazy bare /];
+$EXPORT_TAGS{ 'privacy' } = [qw/ ro rw rwp lazy bare private /];
 
 use Scalar::Util qw( blessed );
 sub confess {
