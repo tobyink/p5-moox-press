@@ -3067,6 +3067,8 @@ L<http://rt.cpan.org/Dist/Display.html?Queue=MooX-Press>.
 
 =head1 SEE ALSO
 
+L<Zydeco>.
+
 L<Moo>, L<MooX::Struct>, L<Types::Standard>.
 
 L<portable::loader>.
