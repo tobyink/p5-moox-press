@@ -118,7 +118,7 @@ C<true> and C<false> boolean constants.
 
 =item *
 
-C<ro>, C<rw>, C<rwp>, C<lazy>, and C<bare> string constants.
+C<ro>, C<rw>, C<rwp>, C<lazy>, C<private>, and C<bare> string constants.
 
 =item *
 
