@@ -301,3 +301,9 @@
 		item "Make Sub::MultiMethod required rather than an optional dependency, so that other modules using MooX::Press and MooX::Pression don't need to depend on it explicitly."^^Packaging;
 		item "Bump minimum required version of Sub::HandlesVia."^^Packaging;
 	].
+
+`MooX-Press 0.045 cpan:TOBYINK`
+	issued  2020-02-14;
+	changeset [
+		item "Integrate Lexical::Accessor support."^^Addition;
+	].
