@@ -12,7 +12,7 @@
 	:runtime-requirement    [ :on "MooX::Enumeration 0.010"^^:CpanId ];
 	:runtime-requirement    [ :on "Sub::HandlesVia 0.013"^^:CpanId ];
 	:runtime-requirement    [ :on "Sub::MultiMethod 0.008"^^:CpanId ];
-	:runtime-requirement    [ :on "Lexical::Accessor 0.011"^^:CpanId ];
+	:runtime-requirement    [ :on "Lexical::Accessor 0.012"^^:CpanId ];
 	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
 	:test-recommendation    [ :on "Moose 2.12"^^:CpanId ];
 	:test-recommendation    [ :on "Mouse"^^:CpanId ];
