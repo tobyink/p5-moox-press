@@ -8,7 +8,7 @@
 	:runtime-requirement    [ :on "Type::Tiny 1.008003"^^:CpanId ];
 	:runtime-requirement    [ :on "Module::Runtime"^^:CpanId ];
 	:runtime-requirement    [ :on "namespace::autoclean"^^:CpanId ];
-	:runtime-requirement    [ :on "Moo 1.006"^^:CpanId ];
+	:runtime-requirement    [ :on "Moo 2.000000"^^:CpanId ];
 	:runtime-requirement    [ :on "MooX::Enumeration 0.010"^^:CpanId ];
 	:runtime-requirement    [ :on "Sub::HandlesVia 0.013"^^:CpanId ];
 	:runtime-requirement    [ :on "Sub::MultiMethod 0.008"^^:CpanId ];
