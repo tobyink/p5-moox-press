@@ -752,7 +752,7 @@ sub _make_package {
 					$shv_toolkit = "Sub::HandlesVia::Toolkit::$toolkit";
 					eval "require $shv_toolkit" or die($@);
 					$shv_data = $shv_toolkit->clean_spec($qname, $attrname, \%spec);
-				}				
+				}
 				$builder->$method($qname, $attrname, \%spec);
 				$shv_toolkit->install_delegations($shv_data) if $shv_data;
 			}
