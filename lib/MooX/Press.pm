@@ -78,7 +78,7 @@ sub _apply_default_options {
 	$opts->{factory_package} = defined($opts->{prefix}) ? $opts->{prefix} : 'Local'
 		unless exists $opts->{factory_package};
 	
-	if ($opts->{factory_package} eq 'Local') {
+	if (defined $opts->{factory_package} and $opts->{factory_package} eq 'Local') {
 		require FindBin;
 		if ($FindBin::Script ne '-e') {
 			require Carp;
