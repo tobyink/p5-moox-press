@@ -93,7 +93,7 @@ sub import {
 	my %opts    = @_==1 ? shift->$_handle_list_add_nulls : @_;
 	$opts{caller} ||= $caller;
 	
-	$builder->_apply_default_options(\%opts);	
+	$builder->_apply_default_options(\%opts);
 	$builder->munge_options(\%opts);
 	
 	my @role_generators  = @{ mkopt $opts{role_generator} };
