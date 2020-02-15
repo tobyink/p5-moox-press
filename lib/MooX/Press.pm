@@ -75,15 +75,21 @@ sub _apply_default_options {
 		}
 	}
 	
+	my $no_warn = exists($opts->{factory_package});
+	
 	$opts->{factory_package} = defined($opts->{prefix}) ? $opts->{prefix} : 'Local'
 		unless exists $opts->{factory_package};
 	
-	if (defined $opts->{factory_package} and $opts->{factory_package} eq 'Local') {
+	if (!$no_warn and defined($opts->{factory_package}) and $opts->{factory_package} eq 'Local') {
 		require FindBin;
 		if ($FindBin::Script ne '-e') {
 			require Carp;
 			Carp::carp('Using "Local" as factory; please set prefix or factory_package');
 		}
+	}
+	
+	unless (exists $opts->{type_library}) {
+		$opts->{type_library} = $builder->qualify_name('Types', $opts->{prefix});
 	}
 }
 
@@ -132,11 +138,6 @@ sub import {
 		$builder->munge_class_options($pkg->[1], \%opts);
 	}
 
-	unless (exists $opts{type_library}) {
-		$opts{type_library} = 'Types';
-		$opts{type_library} = $builder->qualify_name($opts{type_library}, $opts{prefix});
-	}
-	
 	if ($opts{type_library}) {
 		$builder->prepare_type_library($opts{type_library}, %opts);
 		# no type for role generators
