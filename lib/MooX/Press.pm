@@ -56,21 +56,44 @@ my $_handle_list_add_nulls = sub {
 
 my %_cached_moo_helper;
 
+sub _apply_default_options {
+	my $builder = shift;
+	my $opts = $_[0];
+	
+	$opts->{toolkit} ||= $ENV{'PERL_MOOX_PRESS_TOOLKIT'} || 'Moo';
+	
+	$opts->{version} = $opts->{caller}->VERSION
+		unless exists $opts->{version};
+		
+	$opts->{authority} = do { no strict 'refs'; no warnings 'once'; ${$opts->{caller}."::AUTHORITY"} }
+		unless exists $opts->{authority};
+	
+	unless (exists $opts->{prefix}) {
+		$opts->{prefix} = $opts->{caller};
+		if ($opts->{prefix} eq 'main') {
+			$opts->{prefix} = undef;
+		}
+	}
+	
+	$opts->{factory_package} = defined($opts->{prefix}) ? $opts->{prefix} : 'Local'
+		unless exists $opts->{factory_package};
+	
+	if ($opts->{factory_package} eq 'Local') {
+		require FindBin;
+		if ($FindBin::Script ne '-e') {
+			require Carp;
+			Carp::carp('Using "Local" as factory; please set prefix or factory_package');
+		}
+	}
+}
+
 sub import {
 	my $builder = shift;
 	my $caller  = caller;
 	my %opts    = @_==1 ? shift->$_handle_list_add_nulls : @_;
-	$opts{caller}  ||= $caller;
-	$opts{toolkit} ||= $ENV{'PERL_MOOX_PRESS_TOOLKIT'} || 'Moo';
+	$opts{caller} ||= $caller;
 	
-	$opts{version} = $opts{caller}->VERSION
-		unless exists $opts{version};
-	$opts{authority} = do { no strict 'refs'; no warnings 'once'; ${$opts{caller}."::AUTHORITY"} }
-		unless exists $opts{authority};
-	
-	$opts{prefix}          = $opts{caller} unless exists $opts{prefix};
-	$opts{factory_package} = $opts{prefix} unless exists $opts{factory_package};
-	
+	$builder->_apply_default_options(\%opts);	
 	$builder->munge_options(\%opts);
 	
 	my @role_generators  = @{ mkopt $opts{role_generator} };
@@ -234,8 +257,9 @@ sub qualify_name {
 sub type_name {
 	shift;
 	my ($name, $prefix) = @_;
+	$prefix = '' unless defined $prefix;
 	my $stub = $name;
-	if (lc substr($name, 0, length $prefix) eq lc $prefix) {
+	if (length $prefix and lc substr($name, 0, length $prefix) eq lc $prefix) {
 		$stub = substr($name, 2 + length $prefix);
 	}
 	$stub =~ s/::/_/g;
@@ -1647,7 +1671,8 @@ is told to create a class "Animal" and C<prefix> is set to "MyApp::OO", then
 it will create a class called "MyApp::OO::Animal".
 
 This is optional and defaults to the caller. If you wish to have no prefix,
-then pass an explicit C<< prefix => undef >> option.
+then pass an explicit C<< prefix => undef >> option. (If the caller is
+C<main>, then the prefix defaults to undef.)
 
 You can bypass the prefix for a specific class or a specific role using a
 leading double colon, like "::Animal".
@@ -1657,8 +1682,10 @@ leading double colon, like "::Animal".
 A package name to install methods like the C<new_cat> and C<new_cow> methods
 in L</SYNOPSIS>.
 
-This defaults to prefix, but may be explicitly set to undef to suppress the
-creation of such methods.
+This defaults to prefix if the prefix is defined, and "Local" otherwise, but
+may be explicitly set to undef to suppress the creation of such methods. If
+the factory_package is "Local", you'll get a warning, except in C<< perl -e >>
+one-liners.
 
 In every class (but not role) that MooX::Press builds, there will be a
 C<FACTORY> method created so that, for example
