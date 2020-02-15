@@ -320,3 +320,9 @@
 	changeset [
 		item "Improve defaults of `prefix` and `factory_package`, especially when caller is `main`."^^Change;
 	].
+
+`MooX-Press 0.048 cpan:TOBYINK`
+	issued  2020-02-15;
+	changeset [
+		item "Don't issue warning about 'Local' factory if it was specified explicitly; assume they know what they're doing."^^Change;
+	].
