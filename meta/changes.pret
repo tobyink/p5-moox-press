@@ -314,3 +314,9 @@
 		item "Require Lexical::Accessor 0.012 to avoid Hash::FieldHash requirement."^^Packaging;
 		item "Require Moo 2 because Moo 1 is just so old."^^Packaging;
 	].
+
+`MooX-Press 0.047 cpan:TOBYINK`
+	issued  2020-02-15;
+	changeset [
+		item "Improve defaults of `prefix` and `factory_package`, especially when caller is `main`."^^Change;
+	].
