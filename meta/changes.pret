@@ -326,3 +326,9 @@
 	changeset [
 		item "Don't issue warning about 'Local' factory if it was specified explicitly; assume they know what they're doing."^^Change;
 	].
+
+`MooX-Press 0.049 cpan:TOBYINK`
+	issued  2020-02-16;
+	changeset [
+		item "Module::Runtime and Import::Into were already dependencies, so make more use of them instead of just putting `use` statements in stringy eval."^^Change;
+	].
