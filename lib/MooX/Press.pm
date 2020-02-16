@@ -768,6 +768,7 @@ sub _make_package {
 			else
 			{
 				my ($shv_toolkit, $shv_data);
+				my $lex = $builder->_pre_attribute($qname, $attrname, \%spec);
 				if ($spec{handles_via}) {
 					$shv_toolkit = "Sub::HandlesVia::Toolkit::$toolkit";
 					use_module($shv_toolkit);
@@ -775,10 +776,11 @@ sub _make_package {
 				}
 				$builder->$method($qname, $attrname, \%spec);
 				$shv_toolkit->install_delegations($shv_data) if $shv_data;
+				$builder->_post_attribute($qname, $attrname, \%spec, $lex) if $lex;
 			}
 		}
 	}
-
+	
 	if ($opts{multimethod}) {
 		my $method = $opts{toolkit_install_multimethod} || 'install_multimethod';
 		my @mm = $opts{multimethod}->$_handle_list_add_nulls;
@@ -1043,6 +1045,50 @@ sub _get_moo_helper {
 	);
 	die "BADNESS: couldn't get helper '$helpername' for package '$package'" unless $_cached_moo_helper{"$package\::$helpername"};
 	$_cached_moo_helper{"$package\::$helpername"};
+}
+
+sub _pre_attribute {
+	my ($builder, $target, $attrname, $spec) = @_;
+	my %lex;
+	
+	for my $thing (qw/ reader writer accessor clearer predicate /) {
+		if (is_ScalarRef $spec->{$thing}) {
+			my $rand = sprintf('__lexical_%d', 10_000_000 + int rand(89_000_000));
+			$lex{$rand}  = $spec->{$thing};
+			$spec->{$thing} = $rand;
+		}
+	}
+	
+	if (is_ArrayRef $spec->{handles}) {
+		my %new_handles;
+		my @handles = @{$spec->{handles}};
+		while (@handles) {
+			my ($src, $dst) = splice @handles, 0, 2;
+			if (is_ScalarRef $src) {
+				my $rand = sprintf('__lexical_%d', 10_000_000 + int rand(89_000_000));
+				$new_handles{$rand} = $dst;
+				$lex{$rand} = $src;
+			}
+			else {
+				$new_handles{$src} = $dst;
+			}
+		}
+		$spec->{handles} = \%new_handles;
+	}
+	
+	return unless keys %lex;
+	\%lex;
+}
+
+sub _post_attribute {
+	my ($builder, $target, $attrname, $spec) = @_;
+	my %lex = %{ +pop };
+	
+	foreach my $tmp (sort keys %lex) {
+		my $coderef = do { no strict 'refs'; \&{"$target\::$tmp"} };
+		${ $lex{$tmp} } = $coderef;
+		'namespace::clean'->clean_subroutines($target, $tmp);
+	}
 }
 
 sub make_attribute_moo {
@@ -2510,11 +2556,9 @@ For private attributes, you can request an accessor as a coderef:
   );
 
 Private attributes may have defaults and builders (but they are always
-lazy!) They may also have C<handles>. (Though if the C<handles> option
-is an arrayref, it is treated slightly differently from non-private
-attributes; see L<Lexical::Accessor> for details.) You may find you can
-do everything you need with the builders and delegations, so having an
-accessor is unnecessary.
+lazy!) They may also have C<handles>. You may find you can do everything
+you need with the builders and delegations, so having an accessor is
+unnecessary.
 
 =item C<< isa >> I<< (Str|Object) >>
 
@@ -2646,6 +2690,57 @@ Mouse.)
 
 If your attribute has a C<handles_via> option, MooX::Press will load
 L<Sub::HandlesVia> for you.
+
+=item C<< handles >> I<< (ArrayRef|HashRef|RoleName) >>
+
+C<handles> is effectively a mapping of methods in the package being
+defined to methods in a target package. If C<handles> is a hashref,
+then it is obvious how that works. If C<handles> is a role name, then
+the mapping includes all the methods that are part of the role's API,
+and they map to methods of the same name in the target package.
+(Only Moose and Mouse support C<handles> being a role name.)
+
+For attributes with an enum type constraint, the special values
+C<< handles => 1 >> and C<< handles => 2 >> described above also
+work.
+
+When C<handles> is an arrayref, then the different backend modules
+would interpret it differently:
+
+  # Moo, Moose, Mouse, Sub::HandlesVia, Moo(se)X::Enumeration
+  [ "value1", "value2", "value3", "value4" ]
+  
+  # Lexical::Accessor
+  [ "key1" => "value1", "key2" => "value2" ]
+
+Since version 0.050, MooX::Press smooths over the differences between
+them by converting these arrayrefs to hashrefs. Rather surprisingly,
+I<< the Lexical::Accessor interpretation of arrayrefs is used >>. It
+is treated as a list of key-value pairs.
+
+This is because even though that's the minority interpretation, it's
+the more useful interpretation, allowing methods from the target
+package to be given a different name in the package being defined,
+or even assigned to lexical variables.
+
+  has => [
+    'ua' => {
+      is      => 'bare',
+      default => sub { HTTP::Tiny->new },
+      handles => [
+        \$get  => 'get',
+        \$post => 'post',
+      ],
+    },
+  ],
+
+Now C<< $get >> will be a coderef that you can call as a method:
+
+  $self->$get($url);   # same as $self->{ua}->get($url)
+
+If you use C<< handles => \%hash >>, you should get expected behaviour.
+If you use C<< handles => \@array >>, just be aware that your array is
+going to be interpreted like a hash from MooX::Press 0.050 onwards!
 
 =item C<< coerce >> I<< (Bool|CodeRef) >>
 
