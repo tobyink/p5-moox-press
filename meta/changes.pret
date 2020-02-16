@@ -332,3 +332,10 @@
 	changeset [
 		item "Module::Runtime and Import::Into were already dependencies, so make more use of them instead of just putting `use` statements in stringy eval."^^Change;
 	].
+
+`MooX-Press 0.050 cpan:TOBYINK`
+	issued  2020-02-16;
+	changeset [
+		item "MooX::Press will now interpret `handles => ARRAYREF` as if the array were a hash, instead of relying on the underlying delegation implementation to interpret it."^^Change;
+		item "Public attribtues can now have private (lexical) accessors and delegations."^^Change;
+	].
