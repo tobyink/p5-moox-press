@@ -2560,6 +2560,10 @@ lazy!) They may also have C<handles>. You may find you can do everything
 you need with the builders and delegations, so having an accessor is
 unnecessary.
 
+(As of version 0.050, setting C<reader>, C<writer>, C<accessor>, C<clearer>,
+or C<predicate> to a scalarref will also work for I<public> attributes
+too!)
+
 =item C<< isa >> I<< (Str|Object) >>
 
 When the type constraint is a string, it is B<always> assumed to be a class
