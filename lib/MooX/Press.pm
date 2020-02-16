@@ -10,6 +10,8 @@ our $VERSION   = '0.048';
 use Types::Standard 1.008003 -is, -types;
 use Types::TypeTiny qw(ArrayLike HashLike);
 use Exporter::Tiny qw(mkopt);
+use Import::Into;
+use Module::Runtime qw(use_module);
 use namespace::autoclean;
 
 # Options not to carry up into subclasses;
@@ -243,14 +245,14 @@ sub munge_role_generator_options {
 }
 
 sub qualify_name {
-	shift;
+	my $me = shift;
 	my ($name, $prefix, $parent) = @_;
 	my $sigil = "";
 	if ($name =~ /^[@%\$]/) {
 		$sigil = substr $name, 0, 1;
 		$name  = substr $name, 1;
 	}
-	return $sigil.join("::", $parent->$_handle_list, $1) if (defined $parent and $name =~ /^\+(.+)/);
+	$name = join("::", '', $parent->$_handle_list, $1) if (defined $parent and $name =~ /^\+(.+)/);
 	return $sigil.$1 if $name =~ /^::(.+)$/;
 	$prefix ? $sigil.join("::", $prefix, $name) : $sigil.$name;
 }
@@ -282,9 +284,7 @@ sub prepare_type_library {
 	require Type::Tiny::Role;
 	require Type::Tiny::Class;
 	require Type::Registry;
-	eval "package $lib; use Type::Library -base; 1"
-		or $builder->croak("Could not prepare type library $lib: $@");
-	require Module::Runtime;
+	use_module('Type::Library')->import::into($lib, -base);
 	$INC{ Module::Runtime::module_notional_filename($lib) } = __FILE__;
 	my $adder = sub {
 		my $me = shift;
@@ -551,6 +551,8 @@ sub _make_package {
 	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	my $tn = $builder->type_name($qname, $opts{prefix});
 	
+	print "$name -> $qname\n";
+	
 	if (!exists $opts{factory}) {
 		$opts{factory} = $opts{abstract} ? undef : sprintf('new_%s', lc $tn);
 	}
@@ -564,21 +566,16 @@ sub _make_package {
 	if ($opts{is_role}) {
 		no strict 'refs';
 		return if ${"$qname\::BUILT"};
-		
-		eval "package $qname; use $toolkit\::Role; use namespace::autoclean; our \$BUILT = 1"
-			or $builder->croak("Could not create package $qname: $@");
+		use_module("$toolkit\::Role")->import::into($qname);
+		use_module("namespace::autoclean")->import::into($qname);
+		${"$qname\::BUILT"} = 1;
 	}
 	else {
-		my $optthing = '';
-		if ($toolkit eq 'Moo') {
-			$optthing = ' use MooX::TypeTiny;'      if eval { require MooX::TypeTiny };
-		}
-		elsif ($toolkit eq 'Moose') {
-			$optthing = ' use MooseX::XSAccessor;'  if eval { require MooseX::XSAccessor };
-		}
-		eval "package $qname; use $toolkit;$optthing use namespace::autoclean; 1"
-			or $builder->croak("Could not create package $qname: $@");
-	
+		use_module($toolkit)->import::into($qname);
+		use_module("MooX::TypeTiny")->import::into($qname) if $toolkit eq 'Moo' && eval { require MooX::TypeTiny };
+		use_module("MooseX::XSAccessor")->import::into($qname) if $toolkit eq 'Moose' && eval { require MooseX::XSAccessor };
+		use_module("namespace::autoclean")->import::into($qname);
+
 		my $method  = $opts{toolkit_extend_class} || ("extend_class_".lc $toolkit);
 		if (@isa) {
 			$builder->$method($qname, \@isa);
@@ -613,9 +610,7 @@ sub _make_package {
 			elsif (is_ArrayRef($imports[0])) {
 				@params = @{ shift @imports };
 			}
-			require Import::Into;
-			eval "require $import";
-			$import->import::into($qname, @params);
+			use_module($import)->import::into($qname, @params);
 		}
 	}
 	
@@ -775,7 +770,7 @@ sub _make_package {
 				my ($shv_toolkit, $shv_data);
 				if ($spec{handles_via}) {
 					$shv_toolkit = "Sub::HandlesVia::Toolkit::$toolkit";
-					eval "require $shv_toolkit" or die($@);
+					use_module($shv_toolkit);
 					$shv_data = $shv_toolkit->clean_spec($qname, $attrname, \%spec);
 				}
 				$builder->$method($qname, $attrname, \%spec);
