@@ -1768,6 +1768,12 @@ names.
   MyApp::Cow->FACTORY->qualify('Pig')     # 'MyApp::Pig'
   MyApp::Cow->FACTORY->qualify('::Pig')   # 'Pig'
 
+The factpry package will have a global variable C<< %PACKAGES >> where the
+keys are names of all the packages MooX::Press created for you, and the values
+are what kind of package they are:
+
+  say $MyApp::PACKAGES{"MyApp::Cow"};     # 'class'
+
 =item C<< type_library >> I<< (Str|Undef) >>
 
 MooX::Press will automatically create a L<Type::Library>-based type library
