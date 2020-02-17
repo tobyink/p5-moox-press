@@ -99,10 +99,13 @@ sub import {
 	my $builder = shift;
 	my $caller  = caller;
 	my %opts    = @_==1 ? shift->$_handle_list_add_nulls : @_;
-	$opts{caller} ||= $caller;
+	$opts{caller}      ||= $caller;
+	$opts{caller_file} ||= [caller]->[1];
 	
 	$builder->_apply_default_options(\%opts);
 	$builder->munge_options(\%opts);
+	
+	$builder->_mark_package_as_loaded('factory package' => $opts{factory_package}, \%opts);
 	
 	my @role_generators  = @{ mkopt $opts{role_generator} };
 	my @class_generators = @{ mkopt $opts{class_generator} };
@@ -202,6 +205,18 @@ sub import {
 	%_cached_moo_helper = ();  # cleanups
 }
 
+sub _mark_package_as_loaded {
+	my $builder = shift;
+	my ($kind, $pkg, $opts) = @_;
+	defined $pkg or return;
+	$INC{Module::Runtime::module_notional_filename($pkg)} = $opts->{caller_file} || 1;
+	if (defined $opts->{factory_package}) {
+		no strict 'refs';
+		my $idx = \%{ $opts->{factory_package} . '::PACKAGES' };
+		$idx->{$pkg} = $kind;
+	}
+}
+
 sub munge_options {
 	my $builder = shift;
 	my ($opts) = @_;
@@ -291,7 +306,7 @@ sub prepare_type_library {
 	require Type::Tiny::Class;
 	require Type::Registry;
 	use_module('Type::Library')->import::into($lib, -base);
-	$INC{ Module::Runtime::module_notional_filename($lib) } = __FILE__;
+	$builder->_mark_package_as_loaded('type library' => $lib, \%opts);
 	my $adder = sub {
 		my $me = shift;
 		my ($name, $kind, $target, $coercions) = @_;
@@ -504,7 +519,7 @@ sub make_role {
 			Carp::croak("$kind $qname cannot have $key");
 		}
 	}
-
+	
 	$builder->_make_package($name, %opts, is_role => 1);
 }
 
@@ -555,6 +570,8 @@ sub _make_package {
 	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	my $tn = $builder->type_name($qname, $opts{prefix});
 	
+	$builder->_mark_package_as_loaded(($opts{is_role} ? 'role' : 'class') => $qname, \%opts);
+	
 	if (!exists $opts{factory}) {
 		$opts{factory} = $opts{abstract} ? undef : sprintf('new_%s', lc $tn);
 	}
@@ -577,7 +594,7 @@ sub _make_package {
 		use_module("MooX::TypeTiny")->import::into($qname) if $toolkit eq 'Moo' && eval { require MooX::TypeTiny };
 		use_module("MooseX::XSAccessor")->import::into($qname) if $toolkit eq 'Moose' && eval { require MooseX::XSAccessor };
 		use_module("namespace::autoclean")->import::into($qname);
-
+		
 		my $method  = $opts{toolkit_extend_class} || ("extend_class_".lc $toolkit);
 		if (@isa) {
 			$builder->$method($qname, \@isa);
@@ -619,14 +636,14 @@ sub _make_package {
 	if (ref $opts{'begin'}) {
 		$opts{'begin'}->($qname, $opts{is_role} ? 'role' : 'class');
 	}
-
+	
 	if ($opts{overload}) {
 		my @overloads = $opts{overload}->$_handle_list;
 		require overload;
 		require Import::Into;
 		'overload'->import::into($qname, @overloads);
 	}
-
+	
 	my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
 	{
 		my %methods;
@@ -795,7 +812,7 @@ sub _make_package {
 			$builder->$method($qname, $opts{is_role}?'role':'class', $method_name, $method_spec);
 		}
 	}
-
+	
 	{
 		my $method = $opts{toolkit_apply_roles} || ("apply_roles_".lc $toolkit);
 		my @roles = $opts{with}->$_handle_list;
@@ -945,6 +962,8 @@ sub _make_package_generator {
 	my $qname = $builder->qualify_name($name, $opts{prefix});
 	my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
 	
+	$builder->_mark_package_as_loaded("$kind generator" => $qname, \%opts);
+	
 	$builder->$method_installer(
 		$qname,
 		{
@@ -966,7 +985,7 @@ sub _make_package_generator {
 		'Type::Registry'->for_class($qname)->set_parent(
 			'Type::Registry'->for_class($opts{factory_package})
 		);
-
+		
 		my $tn = $builder->type_name($qname, $opts{prefix});
 		if (!exists $opts{factory}) {
 			$opts{factory} = 'generate_' . lc $tn;
@@ -1196,13 +1215,15 @@ sub install_multimethod {
 
 {
 	my $_process_roles = sub {
-		my ($r, $tk) = @_;
+		my ($builder, $r, $tk, $opts) = @_;
 		map {
 			my $role = $_;
 			if ($role =~ /\?$/) {
 				$role =~ s/\?$//;
-				eval "require $role; 1"
-					or eval "package $role; use $tk\::Role; 1";
+				eval "require $role; 1" or do {
+					use_module("$tk\::Role")->import::into($role);
+					$builder->_mark_package_as_loaded(role => $role, $opts);
+				};
 			}
 			$role;
 		} @$r;
@@ -1220,27 +1241,27 @@ sub install_multimethod {
 	
 	sub apply_roles_moo {
 		my $builder = shift;
-		my ($class, $kind, $roles) = @_;
+		my ($class, $kind, $roles, $opts) = @_;
 		my $helper = $builder->_get_moo_helper($class, 'with');
-		my @roles = $roles->$_process_roles('Moo');
+		my @roles = $builder->$_process_roles($roles, 'Moo', $opts);
 		$helper->(@roles);
 		$class->$_maybe_do_multimethods($kind, @roles);
 	}
 
 	sub apply_roles_moose {
 		my $builder = shift;
-		my ($class, $kind, $roles) = @_;
+		my ($class, $kind, $roles, $opts) = @_;
 		require Moose::Util;
-		my @roles = $roles->$_process_roles('Moose');
+		my @roles = $builder->$_process_roles($roles, 'Moose', $opts);
 		Moose::Util::ensure_all_roles($class, @roles);
 		$class->$_maybe_do_multimethods($kind, @roles);
 	}
 
 	sub apply_roles_mouse {
 		my $builder = shift;
-		my ($class, $kind, $roles) = @_;
+		my ($class, $kind, $roles, $opts) = @_;
 		require Mouse::Util;
-		my @roles = $roles->$_process_roles('Mouse');
+		my @roles = $builder->$_process_roles($roles, 'Mouse', $opts);
 		# this can double-apply roles? :(
 		Mouse::Util::apply_all_roles($class, @roles);
 		$class->$_maybe_do_multimethods($kind, @roles);
