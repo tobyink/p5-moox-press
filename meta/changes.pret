@@ -346,3 +346,9 @@
 		item "Remove a debugging line that was included in 0.049."^^Bugfix;
 		item "Allow multiple `use MooX::Press` statements to have the same prefix."^^Change;
 	].
+
+`MooX-Press 0.052 cpan:TOBYINK`
+	issued  2020-02-17;
+	changeset [
+		item "The factory package now has a %PACKAGES variable."^^Addition;
+	].
