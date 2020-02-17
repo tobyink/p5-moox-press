@@ -551,8 +551,6 @@ sub _make_package {
 	my $qname = $builder->qualify_name($name, $opts{prefix}, @isa);
 	my $tn = $builder->type_name($qname, $opts{prefix});
 	
-	print "$name -> $qname\n";
-	
 	if (!exists $opts{factory}) {
 		$opts{factory} = $opts{abstract} ? undef : sprintf('new_%s', lc $tn);
 	}
