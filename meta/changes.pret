@@ -339,3 +339,10 @@
 		item "MooX::Press will now interpret `handles => ARRAYREF` as if the array were a hash, instead of relying on the underlying delegation implementation to interpret it."^^Change;
 		item "Public attribtues can now have private (lexical) accessors and delegations."^^Change;
 	].
+
+`MooX-Press 0.051 cpan:TOBYINK`
+	issued  2020-02-17;
+	changeset [
+		item "Remove a debugging line that was included in 0.049."^^Bugfix;
+		item "Allow multiple `use MooX::Press` statements to have the same prefix."^^Change;
+	].
