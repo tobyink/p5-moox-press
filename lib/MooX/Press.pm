@@ -165,11 +165,14 @@ sub import {
 	}
 	
 	{
+		no strict 'refs';
+		
 		my %methods;
 		my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
 		
 		%methods = delete($opts{factory_package_can})->$_handle_list_add_nulls;
-		$methods{qualify} ||= sub { $builder->qualify($_[1], $opts{'prefix'}) };
+		$methods{qualify} ||= sub { $builder->qualify($_[1], $opts{'prefix'}) }
+			unless exists &{$_[1] . '::qualify'};
 		$builder->$method_installer($opts{'factory_package'}||$opts{'caller'}, \%methods) if keys %methods;
 		
 		%methods = delete($opts{type_library_can})->$_handle_list_add_nulls;
@@ -277,8 +280,11 @@ sub croak {
 
 my $none;
 sub prepare_type_library {
+	no strict 'refs';
+	no warnings 'once';
 	my $builder = shift;
 	my ($lib, %opts) = @_;
+	return if exists &{"$lib\::_mooxpress_add_type"};
 	my ($version, $authority) = ($opts{version}, $opts{authority});
 	my %types_hash;
 	require Type::Tiny::Role;
@@ -334,8 +340,6 @@ sub prepare_type_library {
 			B::perlstring($lib),
 		) or $builder->croak("Could not install type library methods into factory package: $@");
 	}
-	no strict 'refs';
-	no warnings 'once';
 	*{"$lib\::_mooxpress_add_type"} = $adder;
 	*{"$lib\::get_type_for_package"} = $getter;
 	${"$lib\::VERSION"} = $version if defined $version;
