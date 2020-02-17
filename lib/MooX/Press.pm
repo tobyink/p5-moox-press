@@ -164,7 +164,7 @@ sub import {
 		);
 	}
 	
-	{
+	if (defined $opts{'factory_package'}) {
 		no strict 'refs';
 		
 		my %methods;
@@ -172,8 +172,8 @@ sub import {
 		
 		%methods = delete($opts{factory_package_can})->$_handle_list_add_nulls;
 		$methods{qualify} ||= sub { $builder->qualify($_[1], $opts{'prefix'}) }
-			unless exists &{$_[1] . '::qualify'};
-		$builder->$method_installer($opts{'factory_package'}||$opts{'caller'}, \%methods) if keys %methods;
+			unless exists &{$opts{'factory_package'}.'::qualify'};
+		$builder->$method_installer($opts{'factory_package'}, \%methods) if keys %methods;
 		
 		%methods = delete($opts{type_library_can})->$_handle_list_add_nulls;
 		$builder->$method_installer($opts{type_library}, \%methods) if keys %methods;
@@ -336,7 +336,7 @@ sub prepare_type_library {
 				sub get_type_for_package { shift->type_library->get_type_for_package(@_) };
 				1;
 			',
-			$opts{'factory_package'}||$opts{'caller'},
+			$opts{'factory_package'},
 			B::perlstring($lib),
 		) or $builder->croak("Could not install type library methods into factory package: $@");
 	}
@@ -632,10 +632,14 @@ sub _make_package {
 		my %methods;
 		%methods = $opts{can}->$_handle_list_add_nulls;
 		$builder->$method_installer($qname, \%methods) if keys %methods;
-		%methods = $opts{factory_package_can}->$_handle_list_add_nulls;
-		$builder->$method_installer($opts{'factory_package'}||$opts{'caller'}, \%methods) if keys %methods;
-		%methods = $opts{type_library_can}->$_handle_list_add_nulls;
-		$builder->$method_installer($opts{type_library}, \%methods) if keys %methods;
+		if (defined $opts{factory_package}) {
+			%methods = $opts{factory_package_can}->$_handle_list_add_nulls;
+			$builder->$method_installer($opts{factory_package}, \%methods) if keys %methods;
+		}
+		if (defined $opts{type_library}) {
+			%methods = $opts{type_library_can}->$_handle_list_add_nulls;
+			$builder->$method_installer($opts{type_library}, \%methods) if keys %methods;
+		}
 	}
 	
 	{
@@ -870,8 +874,8 @@ sub _make_package {
 			});
 		}
 		
-		if (defined $opts{'factory_package'} or not exists $opts{'factory_package'}) {
-			my $fpackage = $opts{'factory_package'} || $opts{'caller'};
+		if (defined $opts{'factory_package'}) {
+			my $fpackage = $opts{'factory_package'};
 			if ($opts{'factory'}) {
 				my @methods = $opts{'factory'}->$_handle_list;
 				if ($opts{abstract} and @methods) {
