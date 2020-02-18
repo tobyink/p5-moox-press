@@ -360,3 +360,9 @@
 		item "MooX::Press now throws an error if you use certain options in classes that make no sense, like `requires`."^^Change;
 		item "The `begin` and `end` options are now allowed to be arrayrefs."^^Change;
 	].
+
+`MooX-Press 0.054 cpan:TOBYINK`
+	issued  2020-02-18;
+	changeset [
+		item "Refactoring of `_make_package` to split out attribute handling into a separate `install_attributes` method."^^Change;
+	].
