@@ -352,3 +352,11 @@
 	changeset [
 		item "The factory package now has a %PACKAGES variable."^^Addition;
 	].
+
+`MooX-Press 0.053 cpan:TOBYINK`
+	issued  2020-02-18;
+	changeset [
+		item "Role::Hooks support."^^Addition;
+		item "MooX::Press now throws an error if you use certain options in classes that make no sense, like `requires`."^^Change;
+		item "The `begin` and `end` options are now allowed to be arrayrefs."^^Change;
+	].
