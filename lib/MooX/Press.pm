@@ -864,8 +864,20 @@ sub _make_package {
 		}
 	}
 	
-	unless ($opts{is_role}) {
-		
+	if ($opts{is_role}) {
+		for my $event (qw/ before_apply after_apply /) {
+			if (my $hook = $opts{$event}) {
+				require Role::Hooks;
+				my @coderefs = map {
+					is_HashRef($_) ? $builder->wrap_coderef(package => $qname, %$_) : $_
+				} is_ArrayRef($hook) ? @$hook : $hook;
+				'Role::Hooks'->$event($qname, @coderefs);
+			}
+		}
+	}
+	
+	# not role
+	else {
 		if ($toolkit eq 'Moose' && !$opts{'mutable'}) {
 			require Moose::Util;
 			Moose::Util::find_meta($qname)->make_immutable;
@@ -2538,6 +2550,14 @@ C<after>, C<around>, C<has>, or C<multimethod> options. C<requires>,
 C<constant>, and C<type_name> are allowed. C<with> is allowed; you should
 only use C<with> to compose other interfaces (not full roles) though this
 is not currently enforced.
+
+=item C<< before_apply >> I<< (CodeRef|ArrayRef[CodeRef]) >>
+
+Coderef to pass to C<before_apply> from L<Role::Hooks>.
+
+=item C<< after_apply >> I<< (CodeRef|ArrayRef[CodeRef]) >>
+
+Coderef to pass to C<after_apply> from L<Role::Hooks>.
 
 =back
 
