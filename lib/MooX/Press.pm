@@ -7,7 +7,7 @@ package MooX::Press;
 our $AUTHORITY = 'cpan:TOBYINK';
 our $VERSION   = '0.054';
 
-use Types::Standard 1.008003 -is, -types;
+use Types::Standard 1.010000 -is, -types;
 use Types::TypeTiny qw(ArrayLike HashLike);
 use Exporter::Tiny qw(mkopt);
 use Import::Into;

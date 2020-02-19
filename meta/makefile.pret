@@ -5,7 +5,7 @@
 `MooX-Press`
 	:runtime-requirement    [ :on "perl 5.008008"^^:CpanId ];
 	:runtime-requirement    [ :on "Exporter::Tiny 1.000000"^^:CpanId ];
-	:runtime-requirement    [ :on "Type::Tiny 1.008003"^^:CpanId ];
+	:runtime-requirement    [ :on "Type::Tiny 1.010000"^^:CpanId ];
 	:runtime-requirement    [ :on "Module::Runtime"^^:CpanId ];
 	:runtime-requirement    [ :on "namespace::autoclean"^^:CpanId ];
 	:runtime-requirement    [ :on "Moo 2.000000"^^:CpanId ];
