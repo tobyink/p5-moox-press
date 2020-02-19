@@ -685,12 +685,12 @@ sub _make_package {
 		$builder->install_methods($qname, \%methods) if keys %methods;
 	}
 	
-	if (defined $opts{factory_package}) {
+	if (defined $opts{factory_package_can} and defined $opts{factory_package}) {
 		my %methods = $opts{factory_package_can}->$_handle_list_add_nulls;
 		$builder->install_methods($opts{factory_package}, \%methods) if keys %methods;
 	}
 	
-	if (defined $opts{type_library}) {
+	if (defined $opts{type_library_can} and defined $opts{type_library}) {
 		my %methods = $opts{type_library_can}->$_handle_list_add_nulls;
 		$builder->install_methods($opts{type_library}, \%methods) if keys %methods;
 	}
