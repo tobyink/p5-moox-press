@@ -366,3 +366,10 @@
 	changeset [
 		item "Refactoring of `_make_package` to split out attribute handling into a separate `install_attributes` method."^^Change;
 	].
+
+`MooX-Press 0.055 cpan:TOBYINK`
+	issued  2020-02-20;
+	changeset [
+		item "Eliminate 'used only once' warning from some roles."^^Bugfix;
+		item "Require latest stable Type::Params."^^Packaging;
+	].
