@@ -606,10 +606,10 @@ sub _make_package {
 	
 	if ($opts{is_role}) {
 		no strict 'refs';
+		no warnings 'once';
 		return if ${"$qname\::BUILT"};
 		use_module("$toolkit\::Role")->import::into($qname);
 		use_module("namespace::autoclean")->import::into($qname);
-		${"$qname\::BUILT"} = 1;
 	}
 	else {
 		use_module($toolkit)->import::into($qname);
@@ -630,6 +630,7 @@ sub _make_package {
 		${"$qname\::PREFIX"}   = $opts{prefix};
 		${"$qname\::FACTORY"}  = $opts{factory_package};
 		${"$qname\::TYPES"}    = $opts{type_library};
+		${"$qname\::BUILT"}    = 1;
 	}
 	
 	my $reg;
