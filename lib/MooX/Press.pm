@@ -622,17 +622,7 @@ sub _make_package {
 			$builder->$method($qname, \@isa);
 		}
 	}
-	
-	{
-		no strict 'refs';
-		no warnings 'once';
-		${"$qname\::TOOLKIT"}  = $toolkit;
-		${"$qname\::PREFIX"}   = $opts{prefix};
-		${"$qname\::FACTORY"}  = $opts{factory_package};
-		${"$qname\::TYPES"}    = $opts{type_library};
-		${"$qname\::BUILT"}    = 1;
-	}
-	
+		
 	my $reg;
 	if ($opts{factory_package}) {
 		require Type::Registry;
@@ -642,14 +632,24 @@ sub _make_package {
 		$reg = 'Type::Registry'->for_class($qname);
 	}
 	
-	for my $var (qw/VERSION AUTHORITY/) {
-		if (defined $opts{lc $var}) {
-			no strict 'refs';
-			no warnings 'once';
-			${"$qname\::$var"} = $opts{lc $var};
+	{
+		no strict 'refs';
+		no warnings 'once';
+		${"$qname\::TOOLKIT"}  = $toolkit;
+		${"$qname\::PREFIX"}   = $opts{prefix};
+		${"$qname\::FACTORY"}  = $opts{factory_package};
+		${"$qname\::TYPES"}    = $opts{type_library};
+		${"$qname\::BUILT"}    = 1;
+		&Internals::SvREADONLY(\${"$qname\::$_"}, 1)
+			for qw/TOOLKIT PREFIX FACTORY TYPES BUILT/;
+		for my $var (qw/VERSION AUTHORITY/) {
+			if (defined $opts{lc $var}) {
+				${"$qname\::$var"} = $opts{lc $var};
+				&Internals::SvREADONLY(\${"$qname\::$var"}, 1);
+			}
 		}
 	}
-	
+		
 	if (defined $opts{'import'}) {
 		my @imports = $opts{'import'}->$_handle_list;
 		while (@imports) {
@@ -727,6 +727,7 @@ sub _make_package {
 					my $role_qname = $builder->qualify_name(shift(@roles), $opts{prefix});
 					push @processed, $role_qname;
 					no strict 'refs';
+					no warnings 'once';
 					if ( $role_qname !~ /\?$/ and not ${"$role_qname\::BUILT"} ) {
 						my ($role_dfn) = grep { $_->[0] eq "::$role_qname" } @{$opts{_roles}};
 						$builder->make_role(
