@@ -1325,8 +1325,7 @@ sub install_multimethod {
 			if ($role =~ /\?$/) {
 				$role =~ s/\?$//;
 				eval "require $role; 1" or do {
-					use_module("$tk\::Role")->import::into($role);
-					$builder->_mark_package_as_loaded(role => $role, $opts);
+					$builder->make_role("::$role", %$opts, toolkit => $tk);
 				};
 			}
 			$role;
