@@ -62,6 +62,8 @@ sub _apply_default_options {
 	my $builder = shift;
 	my $opts = $_[0];
 	
+	$opts->{default_is} ||= 'ro';
+	
 	$opts->{toolkit} ||= $ENV{'PERL_MOOX_PRESS_TOOLKIT'} || 'Moo';
 	
 	$opts->{version} = $opts->{caller}->VERSION
@@ -1072,8 +1074,8 @@ sub install_attributes {
 		(my $clearername = ($attrname =~ /^_/ ? "_clear$attrname" : "clear_$attrname")) =~ s/\+//;
 		
 		my %spec =
-			is_CodeRef($attrspec) ? (is => 'rw', lazy => 1, builder => $attrspec, clearer => $clearername) :
-			is_Object($attrspec) && $attrspec->can('check') ? (is => 'rw', isa => $attrspec) :
+			is_CodeRef($attrspec) ? (is => $opts->{default_is}, lazy => 1, builder => $attrspec, clearer => $clearername) :
+			is_Object($attrspec) && $attrspec->can('check') ? (is => $opts->{default_is}, isa => $attrspec) :
 			$attrspec->$_handle_list;
 		
 		if (is_CodeRef $spec{builder}) {
@@ -1087,7 +1089,7 @@ sub install_attributes {
 		}
 		
 		%spec = (%spec_hints, %spec);
-		$spec{is} ||= 'rw';
+		$spec{is} ||= $opts->{default_is};
 		
 		if ($spec{is} eq 'lazy') {
 			$spec{is}   = 'ro';
@@ -1939,7 +1941,12 @@ Hashref of additional subs to install into the factory package.
 
 =item C<< type_library_can >> I<< (HashRef[CodeRef]) >>
 
-Hashref of additional subs to install into the factory package.
+Hashref of additional subs to install into the type library package.
+
+=item C<< default_is >>
+
+The default for the C<is> option when defining attributes. The default
+C<default_is> is "ro".
 
 =back
 
@@ -2062,12 +2069,12 @@ type constraint objects, or builder coderefs.
 
   # These mean the same thing...
   "name!" => Str,
-  "name"  => { is => "rw", required => 1, isa => Str },
+  "name"  => { is => "ro", required => 1, isa => Str },
 
   # These mean the same thing...
   "age"   => sub { return 0 },
   "age"   => {
-    is         => "rw",
+    is         => "ro",
     lazy       => 1,
     builder    => sub { return 0 },
     clearer    => "clear_age",
@@ -2451,6 +2458,12 @@ Override mutability for this class and any child classes.
 
 See L</Import Options>.
 
+=item C<< default_is >> I<< (Str) >>
+
+Override default_is for this class and any child classes.
+
+See L</Import Options>.
+
 =item C<< end >> I<< (CodeRef|ArrayRef[CodeRef]) >>
 
 Override C<end> for this class and any child classes.
@@ -2668,8 +2681,8 @@ The following are exceptions:
 
 =item C<< is >> I<< (Str) >>
 
-This is optional rather than being required, and defaults to "rw".
-(Yes, I prefer "ro" generally, but whatever.)
+This is optional rather than being required, and defaults to "ro" (or
+to C<default_is> if you defined that).
 
 MooX::Press supports the Moo-specific values of "rwp" and "lazy", and
 will translate them if you're using Moose or Mouse.
@@ -2677,13 +2690,13 @@ will translate them if you're using Moose or Mouse.
 There is a special value C<< is => "private" >> to create private
 attributes. These attributes cannot be set by the constructor
 (they always have C<< init_arg => undef >>) and do not have accessor
-methods. They are stored inside-out, so cannot even be accessed using
-direct hashref access of the object. If you're thinking this makes them
-totally inaccessible, and therefore useless, think again.
+methods by default. They are stored inside-out, so cannot even be accessed
+using direct hashref access of the object. If you're thinking this makes
+them totally inaccessible, and therefore useless, think again.
 
 For private attributes, you can request an accessor as a coderef:
 
-  my $my_attr;
+  my $my_attr;             # pre-declare lexical!
   use MooX::Press (
     'class:Foo' => {
       has => {
