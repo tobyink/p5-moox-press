@@ -379,3 +379,9 @@
 	changeset [
 		item "The `is` option for attributes now defaults to 'ro', but you can change the default using a `default_is` option."^^Change;
 	].
+
+`MooX-Press 0.057 cpan:TOBYINK`
+	issued  2020-02-24;
+	changeset [
+		item "Eliminate some warnings when `make_attribute` is called to add an attribute to an existing class."^^Change;
+	].
