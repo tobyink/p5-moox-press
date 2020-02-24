@@ -1089,7 +1089,7 @@ sub install_attributes {
 		}
 		
 		%spec = (%spec_hints, %spec);
-		$spec{is} ||= $opts->{default_is};
+		$spec{is} ||= ($opts->{default_is} || 'ro');
 		
 		if ($spec{is} eq 'lazy') {
 			$spec{is}   = 'ro';
