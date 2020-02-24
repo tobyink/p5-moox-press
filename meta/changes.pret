@@ -377,5 +377,5 @@
 `MooX-Press 0.056 cpan:TOBYINK`
 	issued  2020-02-24;
 	changeset [
-		item "`is` now defaults to "ro", but you can change the default using a `default_is` option."^^Change;
+		item "The `is` option for attributes now defaults to 'ro', but you can change the default using a `default_is` option."^^Change;
 	].
