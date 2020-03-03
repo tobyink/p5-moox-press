@@ -1,6 +1,8 @@
 language: perl
 matrix:
   include:
+    - perl: "blead"
+    - perl: "dev"
     - perl: "5.30"
     - perl: "5.28"
     - perl: "5.26"
@@ -24,10 +26,14 @@ matrix:
     - perl: "5.8.9"
       dist: trusty
   allow_failures:
+    - perl: "blead"
     - perl: "5.8.9"
 before_install:
   - export DIST_INKT_PROFILE="Dist::Inkt::Profile::TOBYINK"
   - eval $(curl https://travis-perl.github.io/init) --auto
+cache:
+  directories:
+    - $HOME/perl5
 install:
   - cpan-install --toolchain
   - cpan-install --deps
