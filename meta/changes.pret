@@ -385,3 +385,9 @@
 	changeset [
 		item "Eliminate some warnings when `make_attribute` is called to add an attribute to an existing class."^^Change;
 	].
+
+`MooX-Press 0.058 cpan:TOBYINK`
+	issued  2020-04-08
+	changeset [
+		item "Stop using MooX::TypeTiny for now; it introduces some weird coercion bugs."^^Change;
+	].
