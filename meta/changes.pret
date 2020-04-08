@@ -387,7 +387,7 @@
 	].
 
 `MooX-Press 0.058 cpan:TOBYINK`
-	issued  2020-04-08
+	issued  2020-04-08;
 	changeset [
 		item "Stop using MooX::TypeTiny for now; it introduces some weird coercion bugs."^^Change;
 	].
