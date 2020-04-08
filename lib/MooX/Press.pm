@@ -616,7 +616,7 @@ sub _make_package {
 	}
 	else {
 		use_module($toolkit)->import::into($qname);
-		use_module("MooX::TypeTiny")->import::into($qname) if $toolkit eq 'Moo' && eval { require MooX::TypeTiny };
+#		use_module("MooX::TypeTiny")->import::into($qname) if $toolkit eq 'Moo' && eval { require MooX::TypeTiny };
 		use_module("MooseX::XSAccessor")->import::into($qname) if $toolkit eq 'Moose' && eval { require MooseX::XSAccessor };
 		use_module("namespace::autoclean")->import::into($qname);
 		
@@ -3043,10 +3043,6 @@ a real coderef. This doesn't let you close over any variables, but if
 you can provide code this way, it might be slightly faster.
 
 =head2 Optimization Features
-
-MooX::Press will automatically load L<MooX::TypeTiny> if it's installed,
-which optimizes how Type::Tiny constraints and coercions are inlined into
-Moo constructors. This is only used for Moo classes.
 
 MooX::Press will automatically load and apply L<MooX::XSConstructor> if it's
 installed, which will optmimize constructors for some very basic classes.
