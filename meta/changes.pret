@@ -397,3 +397,11 @@
 	changeset [
 		item "Use MooX::TypeTiny again, but only versions 0.002001 and higher."^^Change;
 	].
+
+`MooX-Press 0.060 cpan:TOBYINK`
+	issued  2020-04-25;
+	changeset [
+		item "Eliminate closure warnings."^^Bugfix;
+		item "Eliminate printf warnings."^^Bugfix;
+		item "Stop wrapping method bodies in do blocks because it conflicts with lvalue methods in versions of Perl too old to optimize the do block away."^^Bugfix;
+	].
