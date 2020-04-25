@@ -391,3 +391,9 @@
 	changeset [
 		item "Stop using MooX::TypeTiny for now; it introduces some weird coercion bugs."^^Change;
 	].
+
+`MooX-Press 0.059 cpan:TOBYINK`
+	issued  2020-04-25;
+	changeset [
+		item "Use MooX::TypeTiny again, but only versions 0.002001 and higher."^^Change;
+	].
