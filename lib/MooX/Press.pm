@@ -1459,6 +1459,7 @@ sub install_methods {
 		my $attrs_string = $is_coderef ? "" : ":method";
 		$attrs_string .= " :lvalue" if match("lvalue", $attrs);
 		
+		no warnings 'printf';
 		my $subcode = sprintf(
 			q{
 				package %-49s  # package name
