@@ -822,6 +822,7 @@ sub _make_package {
 						while (@methods and not ref $methods[0]);
 					my $coderef = shift(@methods) || \"new";
 					for my $name (@method_names) {
+						no warnings 'closure';
 						if (is_CodeRef $coderef) {
 							eval "package $fpackage; sub $name :method { splice(\@_, 1, 0, '$qname'); goto \$coderef }; 1"
 								or $builder->croak("Could not create factory $name in $fpackage: $@");
@@ -1488,6 +1489,8 @@ sub install_methods {
 			$callcode,
 			($is_coderef ? '' : '1;'),
 		);
+		
+		no warnings 'closure';
 		($return{$name} = eval($subcode))
 			or $builder->croak("Could not create method $name in package $class: $@");
 	}
@@ -1666,7 +1669,8 @@ sub _prepare_method_modifier {
 	$invocant_count  = $method->{invocant_count} if exists $method->{invocant_count};
 	
 	my $name = join('|', @$names)."($kind)";
-
+	
+	no warnings 'closure';
 	my $wrapped = eval qq{
 		my \$check;
 		sub {
