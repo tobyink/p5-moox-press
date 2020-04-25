@@ -616,7 +616,7 @@ sub _make_package {
 	}
 	else {
 		use_module($toolkit)->import::into($qname);
-#		use_module("MooX::TypeTiny")->import::into($qname) if $toolkit eq 'Moo' && eval { require MooX::TypeTiny };
+		use_module("MooX::TypeTiny")->import::into($qname) if $toolkit eq 'Moo' && eval { require MooX::TypeTiny; 'MooX::TypeTiny'->VERSION('0.002001') };
 		use_module("MooseX::XSAccessor")->import::into($qname) if $toolkit eq 'Moose' && eval { require MooseX::XSAccessor };
 		use_module("namespace::autoclean")->import::into($qname);
 		
