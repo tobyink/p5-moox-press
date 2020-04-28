@@ -405,3 +405,9 @@
 		item "Eliminate printf warnings."^^Bugfix;
 		item "Stop wrapping method bodies in do blocks because it conflicts with lvalue methods in versions of Perl too old to optimize the do block away."^^Bugfix;
 	].
+
+`MooX-Press 0.061 cpan:TOBYINK`
+	issued  2020-04-28;
+	changeset [
+		item "Fix regexps for extracting method bodies."^^Bugfix;
+	].
