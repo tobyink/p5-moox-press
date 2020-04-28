@@ -1452,7 +1452,7 @@ sub install_methods {
 			$callcode = 'goto $code';
 		}
 		else {
-			($callcode = $code) =~ s/\A \s* sub \s* \{ (.+) \} \s*/$1/x;
+			($callcode = $code) =~ s/\A \s* sub \s* \{ (.+) \} \s* \z/$1/xs;
 			$callcode = "package $caller; $callcode" if defined $caller;
 		}
 		
