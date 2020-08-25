@@ -411,3 +411,9 @@
 	changeset [
 		item "Fix regexps for extracting method bodies."^^Bugfix;
 	].
+
+`MooX-Press 0.062 cpan:TOBYINK`
+	issued  2020-08-25;
+	changeset [
+		item "Support :coerce / :coercion attributes on methods, multimethods, and factory methods to also install them as a coercion."^^Addition;
+	].
