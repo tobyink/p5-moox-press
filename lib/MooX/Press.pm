@@ -522,7 +522,7 @@ sub _do_coercions {
 					if (is_HashRef $coderef) {
 						my %meta = %$coderef;
 						if ( match('coercion', $meta{attributes}) or match('coerce', $meta{attributes}) ) {
-							$builder->croak(uc($thing) . ' used as coercion must take exactly one positional argument')
+							$builder->croak(ucfirst($thing) . ' used as coercion must take exactly one positional argument')
 								unless is_ArrayRef( $meta{signature} ) && 1==@{$meta{signature}} && !$meta{named};
 							
 							my $type = $opts{'reg'}->lookup( $meta{signature}[0] );
