@@ -417,3 +417,9 @@
 	changeset [
 		item "Support :coerce / :coercion attributes on methods, multimethods, and factory methods to also install them as a coercion."^^Addition;
 	].
+
+`MooX-Press 0.063 cpan:TOBYINK`
+	issued  2020-09-01;
+	changeset [
+		item "Factories are now exporters and can export factory methods on request. The exported subs curry the invocant so are not called as methods."^^Addition;
+	].
