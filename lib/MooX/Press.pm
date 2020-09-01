@@ -3228,6 +3228,18 @@ classes and roles could be used with different prefixes in different scripts.
 You could load two different versions of your API in the same script with
 different prefixes. The possibilities are interesting.
 
+Factory methods are also exportable.
+
+  use MyGarden 'new_tree';
+  
+  my $maple = new_tree();  # called as a function, not a method
+
+Exported functions can be renamed (see L<Exporter::Tiny>).
+
+  use MyGarden 'new_tree' => { -as => 'germinate' };
+  
+  my $maple = germinate();
+
 =head2 Why doesn't C<< $object->isa("Leaf") >> work?
 
 In the previous question, C<< $object->isa("Leaf") >> won't work to check
