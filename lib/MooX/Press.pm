@@ -996,7 +996,7 @@ sub generate_package {
 	
 	my %opts;
 	for my $key (qw/ extends with has can constant around before after
-		toolkit version authority mutable begin end requires import overload 
+		toolkit version authority mutable begin end requires import overload
 		before_apply after_apply multimethod /) {
 		if (exists $local_opts{$key}) {
 			$opts{$key} = delete $local_opts{$key};
