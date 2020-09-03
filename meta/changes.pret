@@ -423,3 +423,12 @@
 	changeset [
 		item "Factories are now exporters and can export factory methods on request. The exported subs curry the invocant so are not called as methods."^^Addition;
 	].
+
+`MooX-Press 0.064 cpan:TOBYINK`
+	issued  2020-09-03;
+	changeset [
+		item "Refactor how factory methods are installed."^^Change;
+		item "Refactor how :coerce / :coercion attributes are handled."^^Change;
+		item "Class and role generators can generate multimethods."^^Addition;
+		item "Role generators can generate before_apply/after_apply hooks."^^Addition;
+	].
