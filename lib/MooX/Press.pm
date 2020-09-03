@@ -5,7 +5,7 @@ use warnings;
 package MooX::Press;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.063';
+our $VERSION   = '0.064';
 
 use Types::Standard 1.010000 -is, -types;
 use Types::TypeTiny qw(ArrayLike HashLike);
@@ -997,7 +997,7 @@ sub generate_package {
 	my %opts;
 	for my $key (qw/ extends with has can constant around before after
 		toolkit version authority mutable begin end requires import overload 
-		before_apply after_apply /) {
+		before_apply after_apply multimethod /) {
 		if (exists $local_opts{$key}) {
 			$opts{$key} = delete $local_opts{$key};
 		}
