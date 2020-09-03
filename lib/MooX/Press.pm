@@ -895,7 +895,7 @@ sub install_factories {
 						unless is_ArrayRef( $meta{signature} ) && 1==@sigtypes && !$meta{named};
 					
 					$builder->croak("Too late to add coercion to $to_type")
-						if $to_type->coercion->frozen; 					
+						if $to_type->coercion->frozen;
 					
 					my $from_type = 'Type::Registry'->for_class($qname)->lookup( $sigtypes[0] );
 					
@@ -1389,7 +1389,7 @@ sub install_multimethod {
 			unless is_ArrayRef( $method_spec->{signature} ) && 1==@sigtypes && $signature_style eq 'positional';
 		
 		$builder->croak("Too late to add coercion to $to_type")
-			if $to_type->coercion->frozen; 					
+			if $to_type->coercion->frozen;
 		
 		my $from_type = 'Type::Registry'->for_class($target)->lookup( $sigtypes[0] );
 		
@@ -1586,7 +1586,7 @@ sub install_methods {
 				unless is_ArrayRef( $signature ) && 1==@sigtypes && $signature_style eq 'positional';
 			
 			$builder->croak("Too late to add coercion to $to_type")
-				if $to_type->coercion->frozen; 					
+				if $to_type->coercion->frozen;
 			
 			my $from_type = 'Type::Registry'->for_class($class)->lookup( $sigtypes[0] );
 			
