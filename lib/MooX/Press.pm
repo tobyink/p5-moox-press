@@ -188,6 +188,9 @@ sub import {
 		push @{ $opts{'factory_package'} . '::ISA' }, 'Exporter::Tiny';
 	}
 	
+	my %modifiers;
+	$opts{$_} && ($modifiers{$_} = delete $opts{$_}) for qw/ before after around /;
+	
 	for my $pkg (@roles) {
 		$builder->do_coercions_for_role($pkg->[0], %opts, reg => $reg, %{$pkg->[1]});
 	}
@@ -206,6 +209,23 @@ sub import {
 	}
 	for my $pkg (@classes) {
 		$builder->make_class($pkg->[0], _parent_opts => \%opts, _roles => \@roles, %opts, %{$pkg->[1]});
+	}
+	
+	if (keys %modifiers) {
+		%opts = ( %opts, %modifiers );
+		for my $modifier (qw(before after around)) {
+			if (defined $opts{$modifier}) {
+				my @methods   = $opts{$modifier}->$_handle_list;
+				while (@methods) {
+					my @method_names;
+					push(@method_names, shift @methods)
+						while (@methods and not ref $methods[0]);
+					my $coderef = $builder->_prepare_method_modifier($opts{'factory_package'}, $modifier, \@method_names, shift(@methods));
+					require Class::Method::Modifiers;
+					Class::Method::Modifiers::install_modifier( $opts{'factory_package'}, $modifier, @method_names, $coderef );
+				}
+			}
+		}
 	}
 	
 	%_cached_moo_helper = ();  # cleanups
