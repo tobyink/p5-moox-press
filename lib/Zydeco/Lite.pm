@@ -4,6 +4,9 @@ use warnings;
 
 package Zydeco::Lite;
 
+our $AUTHORITY = 'cpan:TOBYINK';
+our $VERSION   = '0.064';
+
 use MooX::Press ();
 use Types::Standard qw( -types -is );
 
@@ -19,6 +22,7 @@ use Exporter::Shiny our @EXPORT = qw(
 	toolkit
 	coerce
 	overload
+	version authority
 	type_name
 	begin end before_apply after_apply
 );
@@ -435,9 +439,25 @@ sub type_name {
 	return;
 }
 
+sub version {
+	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC}
+		or confess("`version` used outside app, class, or role definition");
+	$target->{version} = shift;
+	return;
+}
+
+sub authority {
+	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC}
+		or confess("`authority` used outside app, class, or role definition");
+	$target->{authority} = shift;
+	return;
+}
+
 sub overload {
 	$THIS{CLASS_SPEC}
 		or confess("`overload` used outside a class");
+	$THIS{CLASS_SPEC}{is_role}
+		and confess("`overload` used in a role definition");
 	
 	my %overload = @_;
 	
@@ -679,16 +699,6 @@ Anonymous class generators:
 Roles, interfaces, and abstract classes work the same as classes, but use
 keywords C<role>, C<interface>, and C<abstract_class>.
 
-Using non-Moo toolkits:
-
-  class "Foo" => sub {
-    toolkit "Mouse";
-  };
-
-  class "Bat" => sub {
-    toolkit "Moose" => ( "StrictConstructor" );
-  };
-
 Inheritance:
 
   class "Base" => sub { };
@@ -749,6 +759,43 @@ Composing a generated role:
   class "Derived" => sub {
     with "Thingy" => [ @args ];
   };
+
+=head3 Package Settings
+
+Class version:
+
+  class "Foo" => sub {
+    version "1.000";
+  };
+
+  class "Foo" => ( version => "1.0" )
+              => sub {
+    ...;
+  };
+
+Class authority:
+
+  class "Foo" => sub {
+    authority "cpan:TOBYINK";
+  };
+
+  class "Foo" => ( version => "1.0", authority => "cpan:TOBYINK" )
+              => sub {
+    ...;
+  };
+
+Using non-Moo toolkits:
+
+  class "Foo" => sub {
+    toolkit "Mouse";
+  };
+
+  class "Bat" => sub {
+    toolkit "Moose" => ( "StrictConstructor" );
+  };
+
+The C<version>, C<authority>, and C<toolkit> keywords can be used within
+C<app>, C<class>, C<role>, C<interface>, or C<abstract_class> definitions.
 
 =head3 Attributes
 
