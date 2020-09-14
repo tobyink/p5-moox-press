@@ -75,8 +75,10 @@ sub app {
 	};
 	$definition->();
 	
-	# use Data::Dumper;
-	# print Dumper( $THIS{APP_SPEC} );
+	if ( $args{debug} ) {
+		require Data::Dumper;
+		print STDERR Data::Dumper::Dumper( $THIS{APP_SPEC} );
+	}
 	
 	'MooX::Press'->import(
 		%{ $THIS{APP_SPEC} },
@@ -653,6 +655,8 @@ Zydeco::Lite - Zydeco without any magic
 L<Zydeco::Lite> is a L<Zydeco>-like module, but without using any parsing
 tricks. Zydeco requires Perl 5.14 or above, but Zydeco::Lite will run on
 any version of Perl since 5.8.8.
+
+It's intended to be a happy medium between L<Zydeco> and L<MooX::Press>.
 
 =head2 Syntax Examples
 
