@@ -72,17 +72,17 @@ sub app {
 		factory_package => $package,
 		prefix          => $package,
 		toolkit         => 'Moo',
+		%args,
 	};
 	$definition->();
 	
-	if ( $args{debug} ) {
+	if ( delete $args{debug} ) {
 		require Data::Dumper;
 		print STDERR Data::Dumper::Dumper( $THIS{APP_SPEC} );
 	}
 	
 	'MooX::Press'->import(
 		%{ $THIS{APP_SPEC} },
-		%args,
 	);
 	
 	return "::$package" if $is_anon;
@@ -165,7 +165,7 @@ sub role {
 	$THIS{APP_SPEC}
 		or confess("`role` used outside an app definition");
 	
-	my $definition = _pop_type( CodeRef, @_ );
+	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
 	push @_, ( is_role => 1, $definition );
 	goto \&class;
 }
@@ -174,7 +174,7 @@ sub abstract_class {
 	$THIS{APP_SPEC}
 		or confess("`abstract_class` used outside an app definition");
 	
-	my $definition = _pop_type( CodeRef, @_ );
+	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
 	push @_, ( abstract => 1, $definition );
 	goto \&class;
 }
@@ -183,7 +183,7 @@ sub interface {
 	$THIS{APP_SPEC}
 		or confess("`interface` used outside an app definition");
 	
-	my $definition = _pop_type( CodeRef, @_ );
+	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
 	push @_, ( interface => 1, is_role => 1, $definition );
 	goto \&class;
 }
@@ -335,8 +335,17 @@ sub _modifier {
 		$args{named}     = 0 unless exists $args{named};
 	}
 	
+	my @keys = keys %args;
+	if ( @keys > 1 ) {
+		$definition = \%args;
+	}
+	
 	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC};
-	push @{ $target->{$modifier_type} ||= [] }, ( $subname, \%args );
+	push @{ $target->{$modifier_type} ||= [] }, (
+		ref($subname) ? @$subname : $subname,
+		$definition,
+	);
+	
 	return;
 }
 
