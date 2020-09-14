@@ -368,7 +368,7 @@ sub with {
 	$THIS{CLASS_SPEC}
 		or confess("`with` used outside a class or role definition");
 	
-	@{ $THIS{CLASS_SPEC}{with} ||= [] } = @_;
+	push @{ $THIS{CLASS_SPEC}{with} ||= [] }, @_;
 	
 	return;
 }
@@ -471,8 +471,22 @@ sub overload {
 }
 
 sub coerce {
-	#TODO
-	confess('not implemented');
+	$THIS{CLASS_SPEC}
+		or confess("`coerce` used outside a class or role");
+	
+	my $type   = _shift_type( Str|Object, @_ )
+		or confess("expected type to coerce from");
+	my $method = _shift_type( Str, @_ )
+		or confess("expected method name to coerce via");
+	my $code   = _shift_type( CodeRef, @_ );
+	
+	push @{ $THIS{CLASS_SPEC}{coerce} ||= [] }, (
+		$type,
+		$method,
+		$code ? $code : (),
+	);
+	
+	return;
 }
 
 sub _handle_hook {
@@ -906,7 +920,20 @@ Setting the type name for a class or role:
 
 Coercion:
 
-B<< TODO >>.
+  class "Foo::Bar" => sub {
+    method "from_arrayref" => sub {
+      my ( $class, $aref ) = ( shift, @_ );
+      ...;
+    };
+    coerce "ArrayRef" => "from_arrayref";
+  };
+
+  class "Foo::Bar" => sub {
+    coerce "ArrayRef" => "from_arrayref" => sub {
+      my ( $class, $aref ) = @_;
+      ...;
+    };
+  };
 
 =head3 Hooks
 
