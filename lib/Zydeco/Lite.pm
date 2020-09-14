@@ -5,7 +5,7 @@ use warnings;
 package Zydeco::Lite;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.064';
+our $VERSION   = '0.065';
 
 use MooX::Press ();
 use Types::Standard qw( -types -is );
@@ -19,6 +19,7 @@ use Exporter::Shiny our @EXPORT = qw(
 	before after around
 	extends with has requires
 	confess
+	true false
 	toolkit
 	coerce
 	overload
@@ -50,6 +51,9 @@ sub _pop_type ($\@) {
 	}
 }
 
+sub true  () { !!1 }
+sub false () { !!0 }
+
 sub confess {
 	require Carp;
 	return Carp::confess( @_ > 1 ? sprintf( shift, @_ ) : $_[0] );
@@ -62,7 +66,7 @@ sub app {
 	
 	my $is_anon;
 	if ( ! $package ) {
-		$is_anon = 1;
+		$is_anon = true;
 		$package = _anon_package_name();
 	}
 	
@@ -166,7 +170,7 @@ sub role {
 		or confess("`role` used outside an app definition");
 	
 	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
-	push @_, ( is_role => 1, $definition );
+	push @_, ( is_role => true, $definition );
 	goto \&class;
 }
 
@@ -175,7 +179,7 @@ sub abstract_class {
 		or confess("`abstract_class` used outside an app definition");
 	
 	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
-	push @_, ( abstract => 1, $definition );
+	push @_, ( abstract => true, $definition );
 	goto \&class;
 }
 
@@ -184,7 +188,7 @@ sub interface {
 		or confess("`interface` used outside an app definition");
 	
 	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
-	push @_, ( interface => 1, is_role => 1, $definition );
+	push @_, ( interface => true, is_role => true, $definition );
 	goto \&class;
 }
 
@@ -215,7 +219,7 @@ sub generator {
 	return (
 		$package ? $package : (),
 		%args,
-		is_generator => 1,
+		is_generator => true,
 		signature    => $sig,
 		$definition,
 	);
@@ -610,7 +614,7 @@ sub after_apply (&) {
 	return;
 }
 
-1;
+true;
 
 __END__
 
@@ -983,6 +987,18 @@ Hooks for roles:
     my ( $role, $target ) = ( shift, shift );
     # Code that runs after a role is applied to a package
   };
+
+=head3 Utilities
+
+Booleans:
+
+  my $truth = true;
+  my $truth = false;
+
+Exceptions:
+
+  confess( 'Something bad happened' );
+  confess( 'Exceeded maximum (%d)', $max );
 
 =head2 Formal Syntax
 

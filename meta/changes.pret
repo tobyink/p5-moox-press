@@ -432,3 +432,11 @@
 		item "Class and role generators can generate multimethods."^^Addition;
 		item "Role generators can generate before_apply/after_apply hooks."^^Addition;
 	].
+
+`MooX-Press 0.065 cpan:TOBYINK`
+	issued  2020-09-14;
+	changeset [
+		item "Factory packages now support before/after/around."^^Addition;
+		item "Multi factories are now supported."^^Addition;
+		item "Brand new Zydeco::Lite module."^^Addition;
+	].
