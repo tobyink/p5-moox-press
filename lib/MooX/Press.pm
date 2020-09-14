@@ -33,6 +33,8 @@ my @delete_keys = qw(
 	type_library_can
 	factory_package_can
 	abstract
+	multimethod
+	multifactory
 );
 
 my $_handle_list = sub {
@@ -743,6 +745,16 @@ sub _make_package {
 		while (@mm) {
 			my ($method_name, $method_spec) = splice(@mm, 0, 2);
 			$builder->install_multimethod($qname, $opts{is_role}?'role':'class', $method_name, $method_spec);
+		}
+	}
+	
+	if (defined $opts{multifactory}) {
+		my @mm = $opts{multifactory}->$_handle_list_add_nulls;
+		while (@mm) {
+			my ($method_name, $method_spec) = splice(@mm, 0, 2);
+			my $old_coderef = $method_spec->{code} or die;
+			my $new_coderef = sub { splice(@_, 1, 0, "$qname"); goto $old_coderef };
+			$builder->install_multimethod($opts{factory_package}, 'class', $method_name, { %$method_spec, code => $new_coderef });
 		}
 	}
 	
@@ -2274,6 +2286,32 @@ L<Sub::MultiMethod>.
        },
     ],
   );
+
+=item C<< multifactory >> I<< (ArrayRef) >>
+
+Similar to C<multimethod> but the methods are created in the factory
+package.
+
+  package MyApp;
+  use MooX::Press (
+    class => [
+      'Foo' => {
+         multifactory => [
+           'new_foo' => {
+             signature => [ 'HashRef' ],
+             code      => sub { my ($factory, $class, $hash)  = @_; ... },
+           },
+           'new_foo' => {
+             signature => [ 'ArrayRef' ],
+             code      => sub { my ($factory, $class, $array) = @_; ... },
+           },
+         ],
+       },
+    ],
+  );
+  
+  my $obj1 = 'MyApp'->new_foo( {} );
+  my $obj2 = 'MyApp'->new_foo( [] );
 
 =item C<< constant >> I<< (HashRef[Item]) >>
 

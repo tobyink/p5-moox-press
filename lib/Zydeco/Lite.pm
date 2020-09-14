@@ -227,6 +227,10 @@ sub _method {
 	my $sig         = _shift_type( Ref, @_ );
 	my %args        = @_;
 	
+	if ( ! defined $subname ) {
+		return confess('anonymous methods not supported yet');
+	}
+	
 	$args{code} = $definition;
 	
 	if ( defined $sig ) {
@@ -242,21 +246,25 @@ sub method {
 	my ( $target, $key ) = $THIS{CLASS_SPEC} 
 		? ( $THIS{CLASS_SPEC}, 'can' )
 		: ( $THIS{APP_SPEC},   'factory_package_can' );
+	$target or confess("`method` used outside an app, class, or role definition");
+	
 	unshift @_, sub {
 		my ( $subname, $args ) = @_;
-		return 'MooX::Press'->wrap_coderef($args)
-			unless defined $subname;
 		( $target->{$key} ||= {} )->{$subname} = $args;
 	};
 	goto \&_method;
 }
 
 sub multi_method {
-	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC};
+	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC}
+		or confess("`multi_method` used outside an app, class, or role definition");
+	
+	my $subname = is_Str($_[0])
+		? $_[0]
+		: confess('anonymous multi factories not supported');
+	
 	unshift @_, sub {
 		my ( $subname, $args ) = @_;
-		confess('anonymous multi methods not supported')
-			unless defined $subname;
 		push @{ $target->{multimethod} ||= [] }, $subname, $args;
 	};
 	goto \&_method;
@@ -268,9 +276,14 @@ sub factory {
 	$THIS{CLASS_SPEC}{is_role}
 		and confess("`factory` used in a role definition");
 	
+	if ( @_==0 and not $THIS{CLASS_SPEC}{factory} ) {
+		$THIS{CLASS_SPEC}{factory} = undef;
+		return;
+	}
+	
 	my $definition = _pop_type( CodeRef|ScalarRef, @_ );
 	my $subnames   = _shift_type( Str|ArrayRef, @_ )
-		or confess("anonymous factories not supported");
+		or confess("factory cannot be anonymous");
 	my $sig        = _shift_type( Ref, @_ );
 	my %args       = @_;
 	
@@ -292,26 +305,14 @@ sub multi_factory {
 		or confess("`multi_factory` used outside a class definition");
 	$target->{is_role}
 		and confess("`multi_factory` used in a role definition");
-		
+	
 	my $subname = is_Str($_[0])
 		? $_[0]
 		: confess('anonymous multi factories not supported');
 	
-	my $proxy_name = "__multi_factory_$subname";
-	
-	my $app = $THIS{APP_SPEC};
-	
 	unshift @_, sub {
 		my ( $subname, $args ) = @_;
-
-		# TODO: $factory should be passed to $code properly,
-		# allowing app to be subclassed.
-		my $code = $args->{code};
-		$args->{code} = sub { unshift @_, $app; goto $code };
-		
-		push @{ $target->{multimethod} ||= [] }, $proxy_name, $args;
-		push @{ $target->{factory} ||= [] }, $subname => \$proxy_name
-			unless $target->{factory} && grep { $_ eq $subname } @{ $target->{factory} };
+		push @{ $target->{multifactory} ||= [] }, $subname, $args;
 	};
 	goto \&_method;
 }
@@ -837,12 +838,6 @@ Methods with named signatures:
     ...;
   };
 
-Anonymous methods:
-
-  my $method = method sub { ... };
-
-  my $method = method [ @signature ] => sub { ... };
-
 Required methods in roles:
 
   requires "method1", "method2";
@@ -893,6 +888,10 @@ Factory methods:
   };
 
 Factory methods may include signatures like methods.
+
+Indicate you want a class to have no factories:
+
+  factory();
 
 The keywords C<multi_method> and C<multi_factory> exist for multimethods.
 
@@ -1010,7 +1009,7 @@ Hooks for roles:
  );
  
  with(
-   List[Str|ArrayRef] @roles,
+   List[Str|ArrayRef] @parents,
  );
  
  method(
