@@ -249,7 +249,7 @@ sub _method {
 }
 
 sub method {
-	my ( $target, $key ) = $THIS{CLASS_SPEC} 
+	my ( $target, $key ) = $THIS{CLASS_SPEC}
 		? ( $THIS{CLASS_SPEC}, 'can' )
 		: ( $THIS{APP_SPEC},   'factory_package_can' );
 	$target or confess("`method` used outside an app, class, or role definition");

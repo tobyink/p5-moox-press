@@ -24,7 +24,7 @@ app 'MyApp' => sub {
 	
 	role 'Role4' => sub {
 		method 'bar' => sub { 999 };
-	};	
+	};
 };
 
 my $obj = 'MyApp'->new_class;
