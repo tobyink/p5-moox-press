@@ -639,7 +639,7 @@ L<Zydeco::Lite> is a L<Zydeco>-like module, but without using any parsing
 tricks. Zydeco requires Perl 5.14 or above, but Zydeco::Lite will run on
 any version of Perl since 5.8.8.
 
-=head2 Syntax Guide
+=head2 Syntax Examples
 
 =head3 Apps
 
@@ -938,6 +938,185 @@ Hooks for roles:
     my ( $role, $target ) = ( shift, shift );
     # Code that runs after a role is applied to a package
   };
+
+=head2 Formal Syntax
+
+ app(
+   Optional[Str]      $name,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ class(
+   Optional[Str]      $name,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ class generator(
+   Optional[Str]      $name,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ role(
+   Optional[Str]      $name,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ role generator(
+   Optional[Str]      $name,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ interface(
+   Optional[Str]      $name,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ interface generator(
+   Optional[Str]      $name,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ abstract_class(
+   Optional[Str]      $name,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ abstract_class generator(
+   Optional[Str]      $name,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   Optional[CodeRef]  $definition,
+ );
+ 
+ extends(
+   List[Str|ArrayRef] @parents,
+ );
+ 
+ with(
+   List[Str|ArrayRef] @parents,
+ );
+ 
+ method(
+   Optional[Str]      $name,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   CodeRef            $definition,
+ );
+ 
+ factory(
+   Str|ArrayRef       $names,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   CodeRef|ScalarRef  $definition_or_via,
+ );
+ 
+ constant(
+   Str                $name,
+   Any                $value,
+ );
+ 
+ multi_method(
+   Str                $name,
+   ArrayRef           $signature,
+   Hash               %args,
+   CodeRef            $definition,
+ );
+ 
+ multi_factory(
+   Str                $name,
+   ArrayRef           $signature,
+   Hash               %args,
+   CodeRef            $definition,
+ );
+ 
+ before(
+   Str|ArrayRef       $names,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   CodeRef            $definition,
+ );
+ 
+ after(
+   Str|ArrayRef       $names,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   CodeRef            $definition,
+ );
+ 
+ around(
+   Str|ArrayRef       $names,
+   Optional[ArrayRef] $signature,
+   Hash               %args,
+   CodeRef            $definition,
+ );
+ 
+ has(
+   Str|ArrayRef       $names,
+   Hash               %spec,
+ );
+ 
+ requires(
+   List[Str]          @names,
+ );
+ 
+ confess(
+   Str                $template,
+   List               @args,
+ );
+ 
+ toolkit(
+   Str                $toolkit,
+   Optional[List]     @imports,
+ );
+ 
+ # TODO: coerce
+ 
+ overload(
+   Hash               %args,
+ );
+ 
+ version(
+   Str                $version,
+ );
+ 
+ authority(
+   Str                $authority,
+ );
+ 
+ type_name(
+   Str                $name,
+ );
+ 
+ begin {
+   ( $package ) = @_;
+   ...;
+ };
+ 
+ end {
+   ( $package ) = @_;
+   ...;
+ };
+ 
+ before_apply {
+   ( $role, $target ) = @_;
+   ...;
+ };
+ 
+ after_apply {
+   ( $role, $target ) = @_;
+   ...;
+ };
 
 =head1 BUGS
 
