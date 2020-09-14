@@ -18,6 +18,7 @@ use Exporter::Shiny our @EXPORT = qw(
 	confess
 	toolkit
 	coerce
+	overload
 	type_name
 	begin end before_apply after_apply
 );
@@ -434,6 +435,20 @@ sub type_name {
 	return;
 }
 
+sub overload {
+	$THIS{CLASS_SPEC}
+		or confess("`overload` used outside a class");
+	
+	my %overload = @_;
+	
+	$THIS{CLASS_SPEC}{overload} = +{
+		%{ $THIS{CLASS_SPEC}{overload} or {} },
+		%overload,
+	};
+	
+	return;
+}
+
 sub coerce {
 	#TODO
 	confess('not implemented');
@@ -802,6 +817,18 @@ Method modifiers:
 Constants:
 
   constant "ANSWER_TO_LIFE" => 42;
+
+Overloading:
+
+  method "to_string" => sub {
+    my $self = shift;
+    ...;
+  };
+  
+  overload(
+    q[""]    => "to_string",
+    fallback => 1,
+  );
 
 Factory methods:
 
