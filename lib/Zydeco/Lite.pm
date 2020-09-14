@@ -227,10 +227,6 @@ sub _method {
 	my $sig         = _shift_type( Ref, @_ );
 	my %args        = @_;
 	
-	if ( ! defined $subname ) {
-		return confess('anonymous methods not supported yet');
-	}
-	
 	$args{code} = $definition;
 	
 	if ( defined $sig ) {
@@ -248,6 +244,8 @@ sub method {
 		: ( $THIS{APP_SPEC},   'factory_package_can' );
 	unshift @_, sub {
 		my ( $subname, $args ) = @_;
+		return 'MooX::Press'->wrap_coderef($args)
+			unless defined $subname;
 		( $target->{$key} ||= {} )->{$subname} = $args;
 	};
 	goto \&_method;
@@ -257,6 +255,8 @@ sub multi_method {
 	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC};
 	unshift @_, sub {
 		my ( $subname, $args ) = @_;
+		confess('anonymous multi methods not supported')
+			unless defined $subname;
 		push @{ $target->{multimethod} ||= [] }, $subname, $args;
 	};
 	goto \&_method;
@@ -270,7 +270,7 @@ sub factory {
 	
 	my $definition = _pop_type( CodeRef|ScalarRef, @_ );
 	my $subnames   = _shift_type( Str|ArrayRef, @_ )
-		or confess("factory cannot be anonymous");
+		or confess("anonymous factories not supported");
 	my $sig        = _shift_type( Ref, @_ );
 	my %args       = @_;
 	
@@ -303,7 +303,7 @@ sub multi_factory {
 	
 	unshift @_, sub {
 		my ( $subname, $args ) = @_;
-		
+
 		# TODO: $factory should be passed to $code properly,
 		# allowing app to be subclassed.
 		my $code = $args->{code};
@@ -837,6 +837,12 @@ Methods with named signatures:
     ...;
   };
 
+Anonymous methods:
+
+  my $method = method sub { ... };
+
+  my $method = method [ @signature ] => sub { ... };
+
 Required methods in roles:
 
   requires "method1", "method2";
@@ -1004,7 +1010,7 @@ Hooks for roles:
  );
  
  with(
-   List[Str|ArrayRef] @parents,
+   List[Str|ArrayRef] @roles,
  );
  
  method(
