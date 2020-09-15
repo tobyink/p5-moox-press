@@ -214,20 +214,7 @@ sub import {
 	}
 	
 	if (keys %modifiers) {
-		%opts = ( %opts, %modifiers );
-		for my $modifier (qw(before after around)) {
-			if (defined $opts{$modifier}) {
-				my @methods   = $opts{$modifier}->$_handle_list;
-				while (@methods) {
-					my @method_names;
-					push(@method_names, shift @methods)
-						while (@methods and not ref $methods[0]);
-					my $coderef = $builder->_prepare_method_modifier($opts{'factory_package'}, $modifier, \@method_names, shift(@methods));
-					require Class::Method::Modifiers;
-					Class::Method::Modifiers::install_modifier( $opts{'factory_package'}, $modifier, @method_names, $coderef );
-				}
-			}
-		}
+		$builder->patch_package( $opts{'factory_package'}, %modifiers );
 	}
 	
 	%_cached_moo_helper = ();  # cleanups
@@ -625,7 +612,7 @@ sub _make_package {
 	
 	$builder->_mark_package_as_loaded(($opts{is_role} ? 'role' : 'class') => $qname, \%opts);
 	
-	if (!exists $opts{factory}) {
+	if (!exists $opts{factory} and !exists $opts{multifactory}) {
 		$opts{factory} = $opts{abstract} ? undef : sprintf('new_%s', lc $tn);
 	}
 	
@@ -748,16 +735,6 @@ sub _make_package {
 		}
 	}
 	
-	if (defined $opts{multifactory}) {
-		my @mm = $opts{multifactory}->$_handle_list_add_nulls;
-		while (@mm) {
-			my ($method_name, $method_spec) = splice(@mm, 0, 2);
-			my $old_coderef = $method_spec->{code} or die;
-			my $new_coderef = sub { splice(@_, 1, 0, "$qname"); goto $old_coderef };
-			$builder->install_multimethod($opts{factory_package}, 'class', $method_name, { %$method_spec, code => $new_coderef });
-		}
-	}
-	
 	if (defined $opts{with}) {
 		my @roles = $opts{with}->$_handle_list;
 		if (@roles) {
@@ -795,6 +772,26 @@ sub _make_package {
 		my $installer = "require_methods_" . lc $toolkit;
 		my %requires  = $opts{requires}->$_handle_list_add_nulls;
 		$builder->$installer($qname, \%requires) if keys %requires;
+	}
+		
+	if (defined $opts{'factory_package'}) {
+		my $fpackage = $opts{'factory_package'};
+		if ($opts{'factory'}) {
+			if ($opts{abstract} and $opts{'factory'}->$_handle_list) {
+				require Carp;
+				Carp::croak("abstract class $qname cannot have factory");
+			}
+			$builder->install_factories($fpackage, $qname, $opts{'factory'});
+		}
+		if ($opts{multifactory}) {
+			my @mm = $opts{multifactory}->$_handle_list_add_nulls;
+			while (@mm) {
+				my ($method_name, $method_spec) = splice(@mm, 0, 2);
+				my $old_coderef = $method_spec->{code} or die;
+				my $new_coderef = sub { splice(@_, 1, 0, "$qname"); goto $old_coderef };
+				$builder->install_multimethod($fpackage, 'class', $method_name, { %$method_spec, code => $new_coderef });
+			}
+		}
 	}
 
 	for my $modifier (qw(before after around)) {
@@ -849,18 +846,7 @@ sub _make_package {
 				},
 			});
 		}
-		
-		if (defined $opts{'factory_package'}) {
-			my $fpackage = $opts{'factory_package'};
-			if ($opts{'factory'}) {
-				if ($opts{abstract} and $opts{'factory'}->$_handle_list) {
-					require Carp;
-					Carp::croak("abstract class $qname cannot have factory");
-				}
-				$builder->install_factories($fpackage, $qname, $opts{'factory'});
-			}
-		}
-		
+				
 		if (defined $opts{'subclass'}) {
 			my @subclasses = $opts{'subclass'}->$_handle_list_add_nulls;
 			while (@subclasses) {
@@ -892,44 +878,124 @@ sub _make_package {
 sub patch_package {
 	my ( $me, $package, %spec ) = ( shift, @_ );
 	
-	my $kind = ( $spec{is_role} or Role::Hooks->is_role($package) )
+	my $kind = ( $spec{is_role} or do { require Role::Hooks; 'Role::Hooks'->is_role($package) } )
 		? 'role'
 		: 'class';
 	delete $spec{is_role};
+	my $fp = $package->can('FACTORY')
+		? $package->FACTORY
+		: do { no strict 'refs'; ${"$package\::FACTORY"} };
+	my $prefix  = do { no strict 'refs'; ${"$package\::PREFIX"}  || $fp   };
+	my $toolkit = do { no strict 'refs'; ${"$package\::TOOLKIT"} || 'Moo' };
+	
+	if ( my $version = delete $spec{version} ) {
+		no strict 'refs';
+		${"$package\::VERSION"} = $version;
+	}
+	
+	if ( my $auth = delete $spec{authority} ) {
+		no strict 'refs';
+		${"$package\::AUTHORITY"} = $auth;
+	}
+	
+	if ( $kind eq 'class' and my $overload = delete $spec{overload} ) {
+		require overload;
+		require Import::Into;
+		'overload'->import::into( $package, $overload->$_handle_list );
+	}
+	
+	if ( my @coercions = @ { delete $spec{coerce} or [] } ) {
+		my $to_type = $fp->type_library->get_type_for_package( any => $package );
+		while ( @coercions ) {
+			my $from_type  = 'Type::Registry'->for_class( $package )->lookup( shift @coercions );
+			my $via_method = shift @coercions;
+			if ( is_CodeRef $coercions[0] or is_HashRef $coercions[0] ) {
+				my $coderef = shift @coercions;
+				'MooX::Press'->install_methods( $package, { $via_method => sub { local $_ = $_[1]; &$coderef } } );
+			}
+			$to_type->coercion->add_type_coercions(
+				$from_type,
+				sprintf( '%s->%s($_)', B::perlstring($package), $via_method ),
+			);
+		}
+	}
 	
 	if ( my $methods = delete $spec{can} ) {
 		'MooX::Press'->install_methods( $package, $methods );
 	}
 	
+	if ( my $constants = delete $spec{constant} ) {
+		'MooX::Press'->install_constants( $package, $constants );
+	}
+	
+	if ( my $atts = delete $spec{has} ) {
+		'MooX::Press'->install_attributes( $package, $atts );
+	}
+	
 	if ( my $multimethods = delete $spec{multimethod} ) {
-		my @mm = @$multimethods;
+		my @mm = $multimethods->$_handle_list_add_nulls;
 		while ( my ( $name, $code ) = splice( @mm, 0, 2 ) ) {
 			'MooX::Press'->install_multimethod( $package, $kind, $name, $code );
 		}
 	}
 	
-	if ( my $constants = delete $spec{constant} ) {
-		'MooX::Press'->install_constants( $package, $constants );
-	}
-
-	if ( my $atts = delete $spec{has} ) {
-		'MooX::Press'->install_attributes( $package, $atts );
-	}
-	
-	for my $modifier ( qw/ before after around / ) {
-		my @mm = @{ delete $spec{$modifier} or [] } or next;
-		while ( my ( $name, $code ) = splice( @mm, 0, 2 ) ) {
-			$name = [ $name ] unless is_ArrayRef $name;
-			my $real_coderef = 'MooX::Press'->_prepare_method_modifier( $package, $modifier, $name, $code );
-			require Class::Method::Modifiers;
-			Class::Method::Modifiers::install_modifier( $package, $modifier, @$name, $real_coderef );
+	if (defined $spec{with}) {
+		my @roles = $spec{with}->$_handle_list;
+		if (@roles) {
+			my @processed;
+			while (@roles) {
+				if (@roles > 1 and ref($roles[1])) {
+					my $gen  = $me->qualify_name(shift(@roles), $prefix);
+					my @args = shift(@roles)->$_handle_list;
+					push @processed, $gen->generate_package(@args);
+				}
+				else {
+					my $role_qname = $me->qualify_name(shift(@roles), $prefix);
+					push @processed, $role_qname;
+				}
+			}
+			my $installer = "apply_roles_" . lc $toolkit;
+			$me->$installer($package, $kind, \@processed);
 		}
 	}
 	
-	#TODO: coerce
-	#TODO: with
-	#TODO: factory
-	#TODO: subclass???
+	if ( $kind eq 'class' ) {
+		
+		if ( $fp and my $factory = delete $spec{factory} ) {
+			'MooX::Press'->install_factories( $fp, $package, $factory );
+		}
+		
+		if ( $fp and my $factory = delete $spec{multifactory} ) {
+			my @mm = $factory->$_handle_list_add_nulls;
+			while (@mm) {
+				my ($method_name, $method_spec) = splice(@mm, 0, 2);
+				my $old_coderef = $method_spec->{code} or die;
+				my $new_coderef = sub { splice(@_, 1, 0, "$package"); goto $old_coderef };
+				$me->install_multimethod( $fp , 'class', $method_name, { %$method_spec, code => $new_coderef });
+			}
+		}
+		
+		#TODO: subclass???
+	}
+	
+	for my $modifier ( qw/ before after around / ) {
+		my @mm = delete($spec{$modifier})->$_handle_list or next;
+		require Class::Method::Modifiers;
+		my @names;
+		while ( @mm ) {
+			if ( is_ArrayRef $mm[0] ) {
+				push @names, @{ shift @mm };
+			}
+			elsif ( is_Str $mm[0] ) {
+				push @names, shift @mm;
+			}
+			else {
+				my $coderef = 'MooX::Press'->_prepare_method_modifier( $package, $modifier, [@names], shift(@mm) );
+				Class::Method::Modifiers::install_modifier( $package, $modifier, @names, $coderef );
+				@names = ();
+			}
+		}
+	}
 	
 	return %spec;
 }
