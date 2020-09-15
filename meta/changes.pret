@@ -448,3 +448,10 @@
 		item "Fix for Perl 5.8."^^Tests;
 		item "Ensure Moose/Mouse classes are mutable before attempting to add attributes to them."^^Bugfix;
 	].
+
+`MooX-Press 0.067 cpan:TOBYINK`
+	issued  2020-09-15;
+	changeset [
+		item "Treat leading `main::` like leading `::`."^^Change;
+		item "MooX::Press::make_absolute_package_name() function."^^Addition;
+	].
