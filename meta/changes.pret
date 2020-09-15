@@ -440,3 +440,11 @@
 		item "Multi factories are now supported."^^Addition;
 		item "Brand new Zydeco::Lite module."^^Addition;
 	].
+
+`MooX-Press 0.066 cpan:TOBYINK`
+	issued  2020-09-15;
+	changeset [
+		item "Refactor code for run-time modification of packages, moving code from Zydeco::Lite to MooX::Press so it can be shared with Zydeco."^^Change;
+		item "Fix for Perl 5.8."^^Tests;
+		item "Ensure Moose/Mouse classes are mutable before attempting to add attributes to them."^^Bugfix;
+	].
