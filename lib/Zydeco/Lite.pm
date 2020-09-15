@@ -129,11 +129,7 @@ sub class {
 
 	my $class_spec = do {
 		local $THIS{CLASS} = $package;
-		local $THIS{CLASS_SPEC} = {
-			abstract  => $args{abstract},
-			interface => $args{interface},
-			is_role   => $args{is_role},
-		};
+		local $THIS{CLASS_SPEC} = { %args };
 		$definition->();
 		delete $THIS{CLASS_SPEC}{is_role};
 		$THIS{CLASS_SPEC};
@@ -505,45 +501,18 @@ sub coerce {
 }
 
 sub _handle_hook {
-	use Data::Dumper;
 	my $package = $THIS{CLASS};
 	my %spec    = %{ $THIS{CLASS_SPEC} };
-	my $kind    = Role::Hooks->is_role($package) ? 'role' : 'class';
 	
-	if ( my $methods = delete $spec{can} ) {
-		'MooX::Press'->install_methods( $package, $methods );
-	}
+	my %remains = 'MooX::Press'->patch_package(
+		$package,
+		%spec,
+	);
+	confess( 'bad stuff in %s hook', $THIS{HOOK} )
+		if keys %remains;
 	
-	if ( my $multimethods = delete $spec{multimethod} ) {
-		my @mm = @$multimethods;
-		while ( my ( $name, $code ) = splice( @mm, 0, 2 ) ) {
-			'MooX::Press'->install_multimethod( $package, $kind, $name, $code );
-		}
-	}
-	
-	if ( my $constants = delete $spec{constant} ) {
-		'MooX::Press'->install_constants( $package, $constants );
-	}
-
-	if ( my $atts = delete $spec{has} ) {
-		'MooX::Press'->install_attributes( $package, $atts );
-	}
-	
-	for my $modifier ( qw/ before after around / ) {
-		my @mm = @{ delete $spec{$modifier} or [] } or next;
-		while ( my ( $name, $code ) = splice( @mm, 0, 2 ) ) {
-			my $real_coderef = 'MooX::Press'->_prepare_method_modifier( $package, $modifier, $name, $code );
-			require Class::Method::Modifiers;
-			Class::Method::Modifiers::install_modifier( $package, $modifier, @$name, $real_coderef );
-		}
-	}
-	
-	#TODO: coerce
-	#TODO: with
-	#TODO: factory
-	
-	confess( 'bad stuff in %s hook', $THIS{HOOK} ) if keys %spec;
 	return;
+
 }
 
 sub begin (&) {
