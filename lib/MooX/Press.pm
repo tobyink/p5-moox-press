@@ -1192,6 +1192,16 @@ sub install_attributes {
 	
 	my @attrs = $has->$_handle_list_add_nulls;
 	
+	my $make_immutable = 0;
+	my $meta =
+		( $toolkit eq 'Moose' ) ? Moose::Util::find_meta( $qname ) :
+		( $toolkit eq 'Mouse' ) ? Mouse::Util::find_meta( $qname ) :
+		undef;
+	if ( $meta and $meta->is_immutable ) {
+		$meta->make_mutable;
+		$make_immutable = 1;
+	}
+	
 	while (@attrs) {
 		my ($attrname, $attrspec) = splice @attrs, 0, 2;
 		
@@ -1316,6 +1326,9 @@ sub install_attributes {
 			$builder->_post_attribute($qname, $attrname, \%spec, $lex) if $lex;
 		}
 	}
+	
+	$meta->make_immutable if $make_immutable;
+	return;
 }
 
 sub _pre_attribute {
