@@ -15,6 +15,11 @@ use match::simple qw(match);
 use Module::Runtime qw(use_module);
 use namespace::autoclean;
 
+sub make_absolute_package_name {
+	my $p = shift;
+	$] lt '5.018' ? "main::$p" : "::$p";
+}
+
 # Options not to carry up into subclasses;
 # mostly because subclasses inherit behaviour anyway.
 my @delete_keys = qw(
@@ -137,7 +142,9 @@ sub import {
 	for my $pkg (@roles) {
 		$pkg->[1] = { $pkg->[1]->$_handle_list };
 		# qualify names in role list early
-		$pkg->[0] = '::' . $builder->qualify_name($pkg->[0], exists($pkg->[1]{prefix})?$pkg->[1]{prefix}:$opts{prefix});
+		$pkg->[0] = make_absolute_package_name(
+			$builder->qualify_name($pkg->[0], exists($pkg->[1]{prefix})?$pkg->[1]{prefix}:$opts{prefix})
+		);
 		$builder->munge_role_options($pkg->[1], \%opts);
 	}
 	for my $pkg (@classes) {
@@ -286,7 +293,7 @@ sub qualify_name {
 		$name  = substr $name, 1;
 	}
 	$name = join("::", '', $parent->$_handle_list, $1) if (defined $parent and $name =~ /^\+(.+)/);
-	return $sigil.$1 if $name =~ /^::(.+)$/;
+	return $sigil.$2 if $name =~ /^(main)?::(.+)$/;
 	$prefix ? $sigil.join("::", $prefix, $name) : $sigil.$name;
 }
 
@@ -442,7 +449,7 @@ sub _make_type {
 			my ($sc_name, $sc_opts) = splice @subclasses, 0, 2;
 			my %opts_clone = %opts;
 			delete $opts_clone{$_} for @delete_keys;
-			$builder->make_type_for_class($sc_name, %opts_clone, extends => "::$qname", $sc_opts->$_handle_list);
+			$builder->make_type_for_class($sc_name, %opts_clone, extends => make_absolute_package_name($qname), $sc_opts->$_handle_list);
 		}
 	}
 }
@@ -510,7 +517,7 @@ sub _do_coercions {
 			my ($sc_name, $sc_opts) = splice @subclasses, 0, 2;
 			my %opts_clone = %opts;
 			delete $opts_clone{$_} for @delete_keys;
-			$builder->do_coercions_for_class($sc_name, %opts_clone, extends => "::$qname", $sc_opts->$_handle_list);
+			$builder->do_coercions_for_class($sc_name, %opts_clone, extends => make_absolute_package_name($qname), $sc_opts->$_handle_list);
 		}
 	}
 }
@@ -590,7 +597,7 @@ sub _expand_isa {
 		if (@raw > 1 and ref($raw[1])) {
 			my $gen  = $builder->qualify_name(shift(@raw), $pfx);
 			my @args = shift(@raw)->$_handle_list;
-			push @isa, sprintf('::%s', $gen->generate_package(@args));
+			push @isa, make_absolute_package_name($gen->generate_package(@args));
 			$changed++;
 		}
 		else {
@@ -751,9 +758,9 @@ sub _make_package {
 					no strict 'refs';
 					no warnings 'once';
 					if ( $role_qname !~ /\?$/ and not ${"$role_qname\::BUILT"} ) {
-						my ($role_dfn) = grep { $_->[0] eq "::$role_qname" } @{$opts{_roles}};
+						my ($role_dfn) = grep { $_->[0] eq make_absolute_package_name($role_qname) } @{$opts{_roles}};
 						$builder->make_role(
-							"::$role_qname",
+							make_absolute_package_name($role_qname),
 							_parent_opts => $opts{_parent_opts},
 							_roles       => $opts{_roles},
 							%{ $opts{_parent_opts} },
@@ -853,7 +860,7 @@ sub _make_package {
 				my ($sc_name, $sc_opts) = splice @subclasses, 0, 2;
 				my %opts_clone = %opts;
 				delete $opts_clone{$_} for @delete_keys;
-				$builder->make_class($sc_name, %opts_clone, extends => "::$qname", $sc_opts->$_handle_list);
+				$builder->make_class($sc_name, %opts_clone, extends => make_absolute_package_name($qname), $sc_opts->$_handle_list);
 			}
 		}
 	}
@@ -1168,10 +1175,10 @@ sub generate_package {
 	}
 	
 	if ($kind eq 'role') {
-		return $builder->make_role("::$qname", %$global_opts, %opts);
+		return $builder->make_role(make_absolute_package_name($qname), %$global_opts, %opts);
 	}
 	else {
-		return $builder->make_class("::$qname", %$global_opts, %opts);
+		return $builder->make_class(make_absolute_package_name($qname), %$global_opts, %opts);
 	}
 }
 
@@ -1565,7 +1572,7 @@ sub install_multimethod {
 			if ($role =~ /\?$/) {
 				$role =~ s/\?$//;
 				eval "require $role; 1" or do {
-					$builder->make_role("::$role", %$opts, toolkit => $tk);
+					$builder->make_role(make_absolute_package_name($role), %$opts, toolkit => $tk);
 				};
 			}
 			$role;
@@ -2115,7 +2122,7 @@ then pass an explicit C<< prefix => undef >> option. (If the caller is
 C<main>, then the prefix defaults to undef.)
 
 You can bypass the prefix for a specific class or a specific role using a
-leading double colon, like "::Animal".
+leading double colon, like "::Animal" (or "main::Animal").
 
 =item C<< factory_package >> I<< (Str|Undef) >>
 

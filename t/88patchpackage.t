@@ -9,7 +9,7 @@ my $lex = 1;
 
 my $app = app sub {
 	role 'Patcher' => sub {
-		before_apply {
+		after_apply {
 			has 'xyzzy';
 			
 			method 'mymethod'

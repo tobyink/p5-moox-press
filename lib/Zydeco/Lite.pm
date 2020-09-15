@@ -89,7 +89,7 @@ sub app {
 		%{ $THIS{APP_SPEC} },
 	);
 	
-	return "::$package" if $is_anon;
+	return MooX::Press::make_absolute_package_name($package) if $is_anon;
 	return;
 }
 
@@ -116,8 +116,13 @@ sub class {
 		else {
 			my $method = $args{is_role} ? 'make_role_generator' : 'make_class_generator';
 			$package   = _anon_package_name();
-			'MooX::Press'->$method( "::$package", %{ $THIS{APP_SPEC} or {} }, %args, generator => $gen );
-			return "::$package";
+			'MooX::Press'->$method(
+				MooX::Press::make_absolute_package_name($package),
+				%{ $THIS{APP_SPEC} or {} },
+				%args,
+				generator => $gen,
+			);
+			return MooX::Press::make_absolute_package_name($package);
 		}
 	}
 	
@@ -139,8 +144,12 @@ sub class {
 	if ( ! $package ) {
 		my $method = $args{is_role} ? 'make_role' : 'make_class';
 		$package   = _anon_package_name();
-		'MooX::Press'->$method( "::$package", %{ $THIS{APP_SPEC} or {} }, %$class_spec );
-		return "::$package";
+		'MooX::Press'->$method(
+			MooX::Press::make_absolute_package_name($package),
+			%{ $THIS{APP_SPEC} or {} },
+			%$class_spec,
+		);
+		return MooX::Press::make_absolute_package_name($package);
 	}
 	# Nested class
 	elsif ( $THIS{CLASS_SPEC} ) {
