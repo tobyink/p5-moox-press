@@ -1584,7 +1584,7 @@ sub install_multimethod {
 	
 	my $_maybe_do_multimethods = sub {
 		my $tk = 'Sub::MultiMethod';
-		if ($INC{'Sub/MultiMethod.pm'} and $tk->can('copy_package_candidates')) {
+		if ($tk->can('copy_package_candidates')) {
 			my ($target, $kind, @sources) = @_;
 			$tk->copy_package_candidates(@sources => $target);
 			$tk->install_missing_dispatchers($target) unless $kind eq 'role';
@@ -1598,7 +1598,7 @@ sub install_multimethod {
 		my $helper = $builder->_get_moo_helper($class, 'with');
 		my @roles = $builder->$_process_roles($roles, 'Moo', $opts);
 		$helper->(@roles);
-		$class->$_maybe_do_multimethods($kind, @roles);
+		$class->$_maybe_do_multimethods($kind, @roles) if $INC{'Sub/MultiMethod.pm'};
 	}
 
 	sub apply_roles_moose {
@@ -1607,7 +1607,7 @@ sub install_multimethod {
 		require Moose::Util;
 		my @roles = $builder->$_process_roles($roles, 'Moose', $opts);
 		Moose::Util::ensure_all_roles($class, @roles);
-		$class->$_maybe_do_multimethods($kind, @roles);
+		$class->$_maybe_do_multimethods($kind, @roles) if $INC{'Sub/MultiMethod.pm'};
 	}
 
 	sub apply_roles_mouse {
@@ -1617,7 +1617,7 @@ sub install_multimethod {
 		my @roles = $builder->$_process_roles($roles, 'Mouse', $opts);
 		# this can double-apply roles? :(
 		Mouse::Util::apply_all_roles($class, @roles);
-		$class->$_maybe_do_multimethods($kind, @roles);
+		$class->$_maybe_do_multimethods($kind, @roles) if $INC{'Sub/MultiMethod.pm'};
 	}
 }
 
