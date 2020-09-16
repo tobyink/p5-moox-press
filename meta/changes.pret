@@ -465,3 +465,11 @@
 		item "Zydeco::Lite's before_apply and after_apply now get passed 'role' or 'class' as an argument indicating what kind of package the role is being applied to."^^Change;
 		item "MooX::Press now forbids roles from having a multifactory. (They could already not have factories, so this was an inconsistency.)"^^Change;
 	].
+
+`MooX-Press 0.069 cpan:TOBYINK`
+	issued  2020-09-17;
+	changeset [
+		item "Allow many keywords to appear outside an app in Zydeco::Lite."^^Change;
+		item "Documentation of scoping in Zydeco::Lite."^^Documentation;
+		item "MooX::Press->patch_package now supports `extends`."^^Change;
+	].
