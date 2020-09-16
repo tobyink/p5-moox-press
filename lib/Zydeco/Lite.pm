@@ -1123,7 +1123,11 @@ Exceptions:
    Optional[List]     @imports,
  );
  
- # TODO: coerce
+ coerce(
+   Object|Str         $type,
+   Str                $via,
+   Optional[CodeRef]  $definition,
+ );
  
  overload(
    Hash               %args,
@@ -1160,6 +1164,19 @@ Exceptions:
    ( $role, $target, $targetkind ) = @_;
    ...;
  };
+
+=head2 Import
+
+Zydeco::Lite uses L<Exporter::Tiny>, so you can choose which keywords
+to import, rename them, etc.
+
+  use Zydeco::Lite { -prefix => 'zy_' };
+  
+  my $app = zy_app {
+    zy_class 'Foo' => sub {};
+  };
+  
+  my $obj = $app->new_foo();
 
 =head1 BUGS
 
