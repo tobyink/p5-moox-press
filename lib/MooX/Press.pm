@@ -305,6 +305,7 @@ sub type_name {
 	if (length $prefix and lc substr($name, 0, length $prefix) eq lc $prefix) {
 		$stub = substr($name, 2 + length $prefix);
 	}
+	$stub =~ s/^(main)?::// while $stub =~ /^(main)?::/;
 	$stub =~ s/::/_/g;
 	$stub;
 }
