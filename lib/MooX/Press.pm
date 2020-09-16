@@ -186,8 +186,10 @@ sub import {
 		my $method_installer = $opts{toolkit_install_methods} || ("install_methods");
 		
 		%methods = delete($opts{factory_package_can})->$_handle_list_add_nulls;
-		$methods{qualify} ||= sub { $builder->qualify($_[1], $opts{'prefix'}) }
-			unless exists &{$opts{'factory_package'}.'::qualify'};
+		if ( my $p = $opts{'prefix'} ) {
+			$methods{qualify} ||= sub { $builder->qualify($_[1], $p) }
+				unless exists &{$opts{'factory_package'}.'::qualify'};
+		}
 		$builder->$method_installer($opts{'factory_package'}, \%methods) if keys %methods;
 		
 		%methods = delete($opts{type_library_can})->$_handle_list_add_nulls;
