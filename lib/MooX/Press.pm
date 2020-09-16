@@ -907,7 +907,15 @@ sub patch_package {
 		no strict 'refs';
 		${"$package\::AUTHORITY"} = $auth;
 	}
-	
+
+	if ( $kind eq 'class' and my $extends = delete $spec{extends} ) {
+		my @isa    = $me->_expand_isa( $prefix, $extends );
+		if (@isa) {
+			my $method = "extend_class_" . lc $toolkit;
+			$me->$method( $package, \@isa );
+		}
+	}
+
 	if ( $kind eq 'class' and my $overload = delete $spec{overload} ) {
 		require overload;
 		require Import::Into;
