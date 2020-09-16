@@ -536,7 +536,7 @@ sub make_role {
 		}
 	}
 
-	for my $key (qw/ abstract extends subclass factory overload /) {
+	for my $key (qw/ abstract extends subclass factory overload multifactory /) {
 		if ($opts{$key}) {
 			require Carp;
 			my $qname = $builder->qualify_name($name, $opts{prefix});
