@@ -262,7 +262,7 @@ sub _method {
 	
 	if ( defined $sig ) {
 		$args{signature} = $sig;
-		$args{named}     = 0 unless exists $args{named};
+		$args{named}     = false unless exists $args{named};
 	}
 	
 	$next->( $subname, \%args );
@@ -273,27 +273,48 @@ sub method {
 	my ( $target, $key ) = $THIS{CLASS_SPEC}
 		? ( $THIS{CLASS_SPEC}, 'can' )
 		: ( $THIS{APP_SPEC},   'factory_package_can' );
-	$target or confess("`method` used outside an app, class, or role definition");
+	my $next;
 	
-	unshift @_, sub {
-		my ( $subname, $args ) = @_;
-		( $target->{$key} ||= {} )->{$subname} = $args;
-	};
+	if ( $target ) {
+		$next = sub {
+			my ( $subname, $args ) = @_;
+			( $target->{$key} ||= {} )->{$subname} = $args;
+		};
+	}
+	else {
+		my $caller = caller;
+		$next = sub {
+			my ( $subname, $args ) = @_;
+			'MooX::Press'->patch_package( $caller, can => { $subname => $args } );
+		};
+	}
+	
+	unshift @_, $next;
 	goto \&_method;
 }
 
 sub multi_method {
-	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC}
-		or confess("`multi_method` used outside an app, class, or role definition");
-	
 	my $subname = is_Str($_[0])
 		? $_[0]
 		: confess('anonymous multi factories not supported');
+	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC};
+	my $next;
 	
-	unshift @_, sub {
-		my ( $subname, $args ) = @_;
-		push @{ $target->{multimethod} ||= [] }, $subname, $args;
-	};
+	if ( $target ) {
+		$next = sub {
+			my ( $subname, $args ) = @_;
+			push @{ $target->{multimethod} ||= [] }, $subname, $args;
+		};
+	}
+	else {
+		my $caller = shift;
+		$next = sub {
+			my ( $subname, $args ) = @_;
+			'MooX::Press'->patch_package( $caller, multimethod => { $subname => $args } );
+		};
+	}
+	
+	unshift @_, $next;
 	goto \&_method;
 }
 
@@ -357,7 +378,7 @@ sub _modifier {
 	
 	if ( defined $sig ) {
 		$args{signature} = $sig;
-		$args{named}     = 0 unless exists $args{named};
+		$args{named}     = false unless exists $args{named};
 	}
 	
 	my @keys = keys %args;
@@ -366,10 +387,17 @@ sub _modifier {
 	}
 	
 	my $target = $THIS{CLASS_SPEC} || $THIS{APP_SPEC};
-	push @{ $target->{$modifier_type} ||= [] }, (
-		ref($subname) ? @$subname : $subname,
-		$definition,
-	);
+	
+	if ( $target ) {
+		push @{ $target->{$modifier_type} ||= [] }, (
+			ref($subname) ? @$subname : $subname,
+			$definition,
+		);
+	}
+	else {
+		my $caller = caller;
+		'MooX::Press'->patch_package( $caller, $modifier_type => { $subname => $definition } );
+	}
 	
 	return;
 }
@@ -424,15 +452,21 @@ sub has {
 }
 
 sub constant {
-	$THIS{CLASS_SPEC}
-		or confess("`constant` used outside a class or role definition");
-	
 	my $names = _shift_type( ArrayRef|Str, @_ )
 		or confess("constants cannot be anonymous");
 	my $value  = shift;
 	
 	$names = [ $names ] unless is_ArrayRef $names;
-	( $THIS{CLASS_SPEC}{constant} ||= {} )->{$_} = $value for @$names;
+	
+	if ( $THIS{CLASS_SPEC} ) {
+		( $THIS{CLASS_SPEC}{constant} ||= {} )->{$_} = $value for @$names;
+	}
+	else {
+		my $caller = caller;
+		my %constants;
+		$constants{$_} = $value for @$names;
+		'MooX::Press'->patch_package( $caller, constant => \%constants );		
+	}
 	
 	return;
 }
