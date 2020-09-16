@@ -70,9 +70,11 @@ sub app {
 		$package = _anon_package_name();
 	}
 	
+	my $caller = caller;
+	
 	local $THIS{APP}      = $package;
 	local $THIS{APP_SPEC} = {
-		caller          => caller,
+		caller          => $caller,
 		factory_package => $package,
 		prefix          => $package,
 		toolkit         => 'Moo',
@@ -94,8 +96,20 @@ sub app {
 }
 
 sub class {
-	$THIS{APP_SPEC}
-		or confess("`class` used outside an app definition");
+	my $finalize = undef;
+	if ( not $THIS{APP_SPEC} ) {
+		my $caller = caller;
+		$THIS{APP_SPEC} = {
+			caller  => $caller,
+			toolkit => 'Moo',
+		};
+		$finalize = sub {
+			'MooX::Press'->import(
+				%{ $THIS{APP_SPEC} },
+			);
+			$THIS{APP_SPEC} = undef;
+		};
+	}
 	
 	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
 	my $package    = ( @_ % 2 ) ? _shift_type( Str, @_ ) : undef;
@@ -111,6 +125,7 @@ sub class {
 				$package,
 			);
 			$THIS{APP_SPEC}{$key} = $gen;
+			$finalize->() if $finalize;
 			return;
 		}
 		else {
@@ -167,6 +182,7 @@ sub class {
 		$THIS{APP_SPEC}{$key} = $class_spec;
 	}
 	
+	$finalize->() if $finalize;
 	return;
 }
 
@@ -668,6 +684,13 @@ Anonymous apps:
   my $app = app sub {
     # definition
   };
+
+As of Zydeco::Lite 0.69, classes and roles no longer need to be defined
+within an C<< app >> block, but bundling them into an app block has the
+advantage that the app is able to define all its classes and roles
+together, cross-referencing them, and setting them up in a sensible order.
+(Which becomes important if you define a role after defining a class that
+consumes it.)
 
 =head3 Classes, Roles, Interfaces, and Abstract Classes
 
