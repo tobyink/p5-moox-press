@@ -1041,18 +1041,27 @@ Exceptions:
 
 =head2 Formal Syntax
 
+Scope B<ANY> means the keyword can appear anywhere where Zydeco::Lite
+is in scope. Scope B<CLASS> means that the keyword may appear only within
+class or abstract class definition blocks. Scope B<ROLE> means that the
+keyword may appear only in role/interface definition blocks. Scope B<APP>
+means that the keyword may appear only within an app definition block.
+
+ # Scope: ANY
  app(
    Optional[Str]      $name,
    Hash               %args,
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  class(
    Optional[Str]      $name,
    Hash               %args,
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  class generator(
    Optional[Str]      $name,
    Optional[ArrayRef] $signature,
@@ -1060,12 +1069,14 @@ Exceptions:
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  role(
    Optional[Str]      $name,
    Hash               %args,
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  role generator(
    Optional[Str]      $name,
    Optional[ArrayRef] $signature,
@@ -1073,12 +1084,14 @@ Exceptions:
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  interface(
    Optional[Str]      $name,
    Hash               %args,
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  interface generator(
    Optional[Str]      $name,
    Optional[ArrayRef] $signature,
@@ -1086,12 +1099,14 @@ Exceptions:
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  abstract_class(
    Optional[Str]      $name,
    Hash               %args,
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: ANY
  abstract_class generator(
    Optional[Str]      $name,
    Optional[ArrayRef] $signature,
@@ -1099,14 +1114,17 @@ Exceptions:
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: CLASS
  extends(
    List[Str|ArrayRef] @parents,
  );
  
+ # Scope: CLASS or ROLE
  with(
    List[Str|ArrayRef] @parents,
  );
  
+ # Scope: ANY
  method(
    Optional[Str]      $name,
    Optional[ArrayRef] $signature,
@@ -1114,6 +1132,7 @@ Exceptions:
    CodeRef            $definition,
  );
  
+ # Scope: CLASS
  factory(
    Str|ArrayRef       $names,
    Optional[ArrayRef] $signature,
@@ -1121,11 +1140,13 @@ Exceptions:
    CodeRef|ScalarRef  $definition_or_via,
  );
  
+ # Scope: ANY
  constant(
    Str                $name,
    Any                $value,
  );
  
+ # Scope: ANY
  multi_method(
    Str                $name,
    ArrayRef           $signature,
@@ -1133,6 +1154,7 @@ Exceptions:
    CodeRef            $definition,
  );
  
+ # Scope: CLASS
  multi_factory(
    Str                $name,
    ArrayRef           $signature,
@@ -1140,6 +1162,7 @@ Exceptions:
    CodeRef            $definition,
  );
  
+ # Scope: ANY
  before(
    Str|ArrayRef       $names,
    Optional[ArrayRef] $signature,
@@ -1147,6 +1170,7 @@ Exceptions:
    CodeRef            $definition,
  );
  
+ # Scope: ANY
  after(
    Str|ArrayRef       $names,
    Optional[ArrayRef] $signature,
@@ -1154,6 +1178,7 @@ Exceptions:
    CodeRef            $definition,
  );
  
+ # Scope: ANY
  around(
    Str|ArrayRef       $names,
    Optional[ArrayRef] $signature,
@@ -1161,65 +1186,109 @@ Exceptions:
    CodeRef            $definition,
  );
  
+ # Scope: CLASS or ROLE
  has(
    Str|ArrayRef       $names,
    Hash               %spec,
  );
  
+ # Scope: ROLE
  requires(
    List[Str]          @names,
  );
  
+ # Scope: ANY
  confess(
    Str                $template,
    List               @args,
  );
  
+ # Scope: APP or CLASS or ROLE
  toolkit(
    Str                $toolkit,
    Optional[List]     @imports,
  );
  
+ # Scope: CLASS or ROLE
  coerce(
    Object|Str         $type,
    Str                $via,
    Optional[CodeRef]  $definition,
  );
  
+ # Scope: CLASS
  overload(
    Hash               %args,
  );
  
+ # Scope: APP or CLASS or ROLE
  version(
    Str                $version,
  );
  
+ # Scope: APP or CLASS or ROLE
  authority(
    Str                $authority,
  );
  
+ # Scope: CLASS or ROLE
  type_name(
    Str                $name,
  );
  
+ # Scope: CLASS or ROLE
  begin {
    ( $package ) = @_;
    ...;
  };
  
+ # Scope: CLASS or ROLE
  end {
    ( $package ) = @_;
    ...;
  };
  
+ # Scope: ROLE
  before_apply {
    ( $role, $target, $targetkind ) = @_;
    ...;
  };
  
+ # Scope: ROLE
  after_apply {
    ( $role, $target, $targetkind ) = @_;
    ...;
+ };
+
+Scopes are dynamic rather than lexical. So although C<extends> can only appear
+in a B<CLASS>, this will work:
+
+ use Zydeco::Lite;
+ 
+ class "Base";
+ 
+ sub foo { extends "Base" }
+ 
+ class "Derived" => sub { foo() };
+
+Keywords used within a C<before_apply> or C<after_apply> block execute in the
+scope of the package they're being applied to. They run too late for
+C<type_name> to work, but most other keywords will work okay. In the following
+example, Derived will be a child class of Base.
+
+ use Zydeco::Lite;
+ 
+ class "Base";
+ 
+ role "ChildOfBase" => sub {
+   after_apply {
+     my ( $role, $target, $kind ) = @_;
+     extends "Base" if $kind eq "class";
+   };
+ };
+ 
+ class "Derived" => sub {
+   with "ChildOfBase";
  };
 
 =head2 Import
