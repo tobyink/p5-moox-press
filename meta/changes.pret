@@ -473,3 +473,9 @@
 		item "Documentation of scoping in Zydeco::Lite."^^Documentation;
 		item "MooX::Press->patch_package now supports `extends`."^^Change;
 	].
+
+`MooX-Press 0.070 cpan:TOBYINK`
+	issued  2020-09-17;
+	changeset [
+		item "Generator packages if called with leading :: should strip it before continuing."^^Bugfix;
+	].
