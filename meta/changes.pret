@@ -485,3 +485,9 @@
 	changeset [
 		item "Fix occasional errors figuring out the type name for classes named with a leading + sign."^^Bugfix;
 	].
+
+`MooX-Press 0.072 cpan:TOBYINK`
+	issued  2020-09-17;
+	changeset [
+		item "Support anonymous methods."^^Addition;
+	].
