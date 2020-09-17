@@ -250,15 +250,40 @@ sub _method {
 	my $next        = shift;
 	my $definition  = _pop_type( CodeRef, @_ )
 		or confess('methods must have a body');
-	my $subname     = _shift_type( Str, @_ );
+	my $subname     = _shift_type( Str|ScalarRef, @_ );
 	my $sig         = _shift_type( Ref, @_ );
 	my %args        = @_;
 	
-	if ( ! defined $subname ) {
-		return confess('anonymous methods not supported yet');
+	if ( is_ScalarRef $subname or is_Undef $subname ) {
+		my $coderef;
+		
+		if ( $sig or keys %args ) {
+			if ( defined $sig ) {
+				$args{caller}    = caller;
+				$args{code}      = $definition;
+				$args{signature} = $sig;
+				$args{named}     = false unless exists $args{named};
+				
+				$coderef = 'MooX::Press'->wrap_coderef( \%args );
+			}
+		}
+		else {
+			$coderef = $definition;
+		}
+		
+		return $coderef if is_Undef $subname;
+		
+		if ( not is_Undef $$subname ) {
+			confess('method name expected to be string or reference to undef');
+		}
+		
+		$$subname = $coderef;
+		&Internals::SvREADONLY($subname, 1);
+		return;
 	}
 	
-	$args{code} = $definition;
+	$args{code}   = $definition;
+	$args{caller} = caller;
 	
 	if ( defined $sig ) {
 		$args{signature} = $sig;
@@ -907,6 +932,20 @@ Methods with named signatures:
     my ( $self, $args ) = ( shift, @_ );
     ...;
   };
+
+Anonymous methods:
+
+  my $mymeth = method sub {
+    my ( $self, @args ) = ( shift, @_ );
+    ...;
+  }
+
+  method \(my $mymeth) => sub {
+    my ( $self, @args ) = ( shift, @_ );
+    ...;
+  }
+
+Anonymous methods may have signatures.
 
 Required methods in roles:
 
