@@ -1155,6 +1155,8 @@ sub generate_package {
 	my $global_opts       = shift;
 	my %local_opts        = ( @_ == 1 ? $_[0] : \@_ )->$_handle_list;
 	
+	$generator_package =~ s/^(main)?::// while $generator_package =~ /^(main)?::/;
+	
 	my %opts;
 	for my $key (qw/ extends with has can constant around before after
 		toolkit version authority mutable begin end requires import overload
