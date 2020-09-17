@@ -465,7 +465,7 @@ sub constant {
 		my $caller = caller;
 		my %constants;
 		$constants{$_} = $value for @$names;
-		'MooX::Press'->patch_package( $caller, constant => \%constants );		
+		'MooX::Press'->patch_package( $caller, constant => \%constants );
 	}
 	
 	return;
