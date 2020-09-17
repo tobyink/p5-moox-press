@@ -447,7 +447,17 @@ sub _make_type {
 			!!$opts{coerce},
 		);
 	}
-	
+
+	if (defined $opts{'with'}) {
+		my @tag_roles = grep /\?$/, $opts{'with'}->$_handle_list;
+		for my $role (@tag_roles) {
+			$role =~ s/\?$//;
+			my %opts_clone = %opts;
+			delete $opts_clone{$_} for @delete_keys;
+			$builder->make_type_for_role($role, %opts_clone);
+		}
+	}
+
 	if (defined $opts{'subclass'} and not $opts{'is_role'}) {
 		my @subclasses = $opts{'subclass'}->$_handle_list_add_nulls;
 		while (@subclasses) {
