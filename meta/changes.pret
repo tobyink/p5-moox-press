@@ -479,3 +479,9 @@
 	changeset [
 		item "Generator packages if called with leading :: should strip it before continuing."^^Bugfix;
 	].
+
+`MooX-Press 0.071 cpan:TOBYINK`
+	issued  2020-09-17;
+	changeset [
+		item "Fix occasional errors figuring out the type name for classes named with a leading + sign."^^Bugfix;
+	].
