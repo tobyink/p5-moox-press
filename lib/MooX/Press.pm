@@ -302,6 +302,7 @@ sub qualify_name {
 sub type_name {
 	shift;
 	my ($name, $prefix) = @_;
+	$name =~ s/^(main)?::// while $name =~ /^(main)?::/;
 	$prefix = '' unless defined $prefix;
 	my $stub = $name;
 	if (length $prefix and lc substr($name, 0, length $prefix) eq lc $prefix) {
@@ -437,6 +438,7 @@ sub _make_type {
 	my $qname = $builder->qualify_name($name, $opts{prefix}, $opts{extends});
 	
 	my $type_name = $opts{'type_name'} || $builder->type_name($qname, $opts{'prefix'});
+	
 	if ($opts{'type_library'}->can('_mooxpress_add_type')) {
 		$opts{'type_library'}->_mooxpress_add_type(
 			$type_name,
