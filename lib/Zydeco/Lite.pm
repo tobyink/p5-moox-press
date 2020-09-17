@@ -34,13 +34,13 @@ our %THIS;
 
 sub _shift_type ($\@) {
 	my ( $type, $ref ) = @_;
-	return shift @$ref if $type->check( $ref->[0] );
+	return shift @$ref if @$ref && $type->check( $ref->[0] );
 	return undef;
 }
 
 sub _pop_type ($\@) {
 	my ( $type, $ref ) = @_;
-	return pop @$ref if $type->check( $ref->[-1] );
+	return pop @$ref if @$ref && $type->check( $ref->[-1] );
 	return undef;
 }
 
