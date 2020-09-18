@@ -1550,6 +1550,13 @@ sub extend_class_moose {
 sub extend_class_mouse {
 	my $builder = shift;
 	my ($class, $isa) = @_;
+	
+	PARENT: for my $parent ( @$isa ) {
+		next PARENT if $parent->isa('Mouse::Object');
+		use_module("MouseX::NonMoose")->import::into($class);
+		last PARENT;
+	}
+	
 	require Mouse::Util;
 	(Mouse::Util::find_meta($class) or $class->meta)->superclasses(@$isa);
 }
@@ -2310,7 +2317,7 @@ don't want the prefix to be added.
 Multiple inheritance is supported.
 
 If you are using Moose to extend a non-Moose class, MooseX::NonMoose
-will load automatically.
+will load automatically. (This also happens with MouseX::Foreign.)
 
 =item C<< with >> I<< (ArrayRef[Str]) >>
 
