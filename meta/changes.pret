@@ -497,3 +497,15 @@
 	changeset [
 		item "MooX::Press now creates type constraints for 'tag' roles."^^Change;
 	].
+
+`MooX-Press 0.074 cpan:TOBYINK`
+	issued  2020-09-18;
+	changeset [
+		item "Zydeco::Lite allows apps, classes, roles, abstract classes, and interfaces to take a scalar reference as their name, like methods can."^^Change;
+		item "Update Zydeco::Lite formal syntax."^^Documentation;
+		item "Add Zydeco::Lite extended example."^^Documentation;
+		item "MooX::Press will load MooseX::NonMoose when it's needed."^^Change;
+		item "MooX::Press will load MouseX::Foreign when it's needed."^^Change;
+		item "MooX::Press will load UNIVERSAL::DOES on Perl older than v5.10."^^Change;
+		item "Dynamically calculate dependency list during build process."^^Packaging;
+	].
