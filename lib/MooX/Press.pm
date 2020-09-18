@@ -1535,6 +1535,14 @@ sub extend_class_moo {
 sub extend_class_moose {
 	my $builder = shift;
 	my ($class, $isa) = @_;
+	
+	PARENT: for my $parent ( @$isa ) {
+		next PARENT if $parent->isa('Moose::Object');
+		next PARENT if $parent->isa('Moo::Object');
+		use_module("MooseX::NonMoose")->import::into($class);
+		last PARENT;
+	}
+	
 	require Moose::Util;
 	(Moose::Util::find_meta($class) or $class->meta)->superclasses(@$isa);
 }
@@ -2300,6 +2308,9 @@ The prefix is automatically added. Include a leading "::" if you
 don't want the prefix to be added.
 
 Multiple inheritance is supported.
+
+If you are using Moose to extend a non-Moose class, MooseX::NonMoose
+will load automatically.
 
 =item C<< with >> I<< (ArrayRef[Str]) >>
 
