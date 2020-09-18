@@ -62,7 +62,7 @@ sub _return_anon {
 	
 	$$nameref = $value;
 	&Internals::SvREADONLY($nameref, 1);
-	return;	
+	return;
 }
 
 sub true  () { !!1 }
