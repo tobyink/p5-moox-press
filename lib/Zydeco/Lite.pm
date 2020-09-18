@@ -175,7 +175,7 @@ sub class {
 		$args{is_role} ? 'role' : 'class',
 		is_Str($name) ? $name : '',
 	);
-
+	
 	my $class_spec = do {
 		local $THIS{CLASS} = is_Str($name) ? $name : undef;
 		local $THIS{CLASS_SPEC} = { %args };
@@ -1383,6 +1383,74 @@ to import, rename them, etc.
   };
   
   my $obj = $app->new_foo();
+
+=head1 EXAMPLE
+
+   package Zoo;
+   use strict;
+   use warnings;
+   use Zydeco::Lite;
+   
+   my $app = __PACKAGE__;
+   
+   app $app => sub {
+      
+      class 'Park' => sub {
+         
+         has 'name' => (
+            type        => 'Str',
+         );
+         
+         has 'animals' => (
+            type        => 'ArrayRef',
+            default     => sub { [] },
+            handles_via => 'Array',
+            handles     => [
+               'add_animal' => 'push',
+               'list_animals' => 'all',
+            ],
+         );
+         
+         method 'print_animals' => [] => sub {
+            my ( $self ) = ( shift );
+            for my $animal ( $self->list_animals ) {
+               $animal->print_animal;
+            }
+         };
+      };
+      
+      role generator 'Animal' => [ 'Str' ] => sub {
+         my ( $gen, $species ) = ( shift, @_ );
+         
+         has 'name' => ( type => 'Str', required => true );
+         
+         method 'print_animal' => [] => sub {
+            my ( $self ) = ( shift );
+            printf( "%s (%s)\n", $self->name, $species );
+         };
+      };
+      
+      class 'Lion' => sub {
+         with 'Animal' => [ 'Panthera leo' ];
+      };
+      
+      class 'Tiger' => sub {
+         with 'Animal' => [ 'Panthera tigris' ];
+      };
+      
+      class 'Bear' => sub {
+         with 'Animal' => [ 'Ursus arctos' ];
+      };
+   };
+   
+   my $zoo = $app->new_park( name => "Oz Zoo" );
+   $zoo->add_animal( $app->new_lion( name => "Simba" ) );
+   $zoo->add_animal( $app->new_lion( name => "Aslan" ) );
+   $zoo->add_animal( $app->new_tiger( name => "Tigger" ) );
+   $zoo->add_animal( $app->new_tiger( name => "Shere Khan" ) );
+   $zoo->add_animal( $app->new_bear( name => "Paddington" ) );
+   $zoo->add_animal( $app->new_bear( name => "Yogi" ) );
+   $zoo->print_animals; # oh my!
 
 =head1 BUGS
 
