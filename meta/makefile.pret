@@ -15,11 +15,17 @@
 	:runtime-requirement    [ :on "Lexical::Accessor 0.012"^^:CpanId ];
 	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
 	:runtime-requirement    [ :on "Role::Hooks 0.001"^^:CpanId ];
+	:runtime-recommendation [ :on "Moose 2.12"^^:CpanId ];
+	:runtime-recommendation [ :on "MooseX::NonMoose"^^:CpanId ];
+	:runtime-suggestion     [ :on "Mouse"^^:CpanId ];
+	:runtime-suggestion     [ :on "MouseX::NonMoose"^^:CpanId ];
 	:test-recommendation    [ :on "Moose 2.12"^^:CpanId ];
-	:test-recommendation    [ :on "Mouse"^^:CpanId ];
+	:test-recommendation    [ :on "MooseX::NonMoose"^^:CpanId ];
 	:test-requirement       [ :on "Test::More 0.96"^^:CpanId ];
 	:test-requirement       [ :on "Test::Requires"^^:CpanId ];
 	:test-requirement       [ :on "Test::Fatal"^^:CpanId ];
+	:test-suggestion        [ :on "Mouse"^^:CpanId ];
+	:test-suggestion        [ :on "MouseX::NonMoose"^^:CpanId ];
 	:develop-recommendation [ :on "Dist::Inkt 0.001"^^:CpanId ];
 	.
 
