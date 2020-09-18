@@ -489,5 +489,11 @@
 `MooX-Press 0.072 cpan:TOBYINK`
 	issued  2020-09-17;
 	changeset [
-		item "Support anonymous methods."^^Addition;
+		item "Zydeco::Lite now supports anonymous methods."^^Addition;
+	].
+
+`MooX-Press 0.073 cpan:TOBYINK`
+	issued  2020-09-18;
+	changeset [
+		item "MooX::Press now creates type constraints for "tag" roles."^^Change;
 	].
