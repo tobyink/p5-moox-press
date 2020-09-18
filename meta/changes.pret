@@ -495,5 +495,5 @@
 `MooX-Press 0.073 cpan:TOBYINK`
 	issued  2020-09-18;
 	changeset [
-		item "MooX::Press now creates type constraints for "tag" roles."^^Change;
+		item "MooX::Press now creates type constraints for 'tag' roles."^^Change;
 	].
