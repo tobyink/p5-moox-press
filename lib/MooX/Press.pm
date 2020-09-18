@@ -20,6 +20,10 @@ sub make_absolute_package_name {
 	$] lt '5.018' ? "main::$p" : "::$p";
 }
 
+if ( $] lt '5.010' ) {
+	require UNIVERSAL::DOES;
+}
+
 # Options not to carry up into subclasses;
 # mostly because subclasses inherit behaviour anyway.
 my @delete_keys = qw(
