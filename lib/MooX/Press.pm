@@ -340,6 +340,7 @@ sub prepare_type_library {
 	my $adder = sub {
 		my $me = shift;
 		my ($name, $kind, $target, $coercions) = @_;
+		return if $types_hash{$kind}{$target};
 		my $tc_class = 'Type::Tiny::' . ucfirst($kind);
 		my $tc_obj   = $tc_class->new(
 			name     => $name,
