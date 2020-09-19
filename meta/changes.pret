@@ -509,3 +509,9 @@
 		item "MooX::Press will load UNIVERSAL::DOES on Perl older than v5.10."^^Change;
 		item "Dynamically calculate dependency list during build process."^^Packaging;
 	].
+
+`MooX-Press 0.075 cpan:TOBYINK`
+	issued  2020-09-19;
+	changeset [
+		item "Prevent type library from complaining about type constraints for 'tag' roles being added multiple times."^^Bugfix;
+	].
