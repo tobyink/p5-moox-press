@@ -5,7 +5,7 @@ use warnings;
 package Zydeco::Lite;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.076';
+our $VERSION   = '0.077';
 
 use MooX::Press ();
 use Types::Standard qw( -types -is );
@@ -162,7 +162,7 @@ sub class {
 	my $name       = ( @_ % 2 ) ? _shift_type( Str|ScalarRef, @_ ) : undef;
 	my %args       = @_;
 	
-	$args{definition_content} ||= _make_definition_context(1, $dummy_dfn ? () : $definition);
+	$args{definition_context} ||= _make_definition_context(1, $dummy_dfn ? () : $definition);
 
 	my $kind =
 		$args{interface}   ? 'interface' :
