@@ -1347,7 +1347,7 @@ sub install_attributes {
 		if ($spec{is} eq 'lazy') {
 			$spec{is}   = 'ro';
 			$spec{lazy} = !!1;
-			$spec{builder} ||= $buildername;
+			$spec{builder} ||= $buildername unless exists $spec{default};
 		}
 		elsif ($spec{is} eq 'private') {
 			$spec{is}   = 'rw';
