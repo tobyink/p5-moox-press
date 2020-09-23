@@ -191,8 +191,12 @@ sub import {
 		
 		%methods = delete($opts{factory_package_can})->$_handle_list_add_nulls;
 		if ( my $p = $opts{'prefix'} ) {
-			$methods{qualify} ||= sub { $builder->qualify($_[1], $p) }
+			$methods{qualify} ||= sub { $builder->qualify_name($_[1], $p) }
 				unless exists &{$opts{'factory_package'}.'::qualify'};
+			$methods{get_class} ||= sub { shift; $builder->_get_class($p, @_) }
+				unless exists &{$opts{'factory_package'}.'::get_class'};
+			$methods{get_role} ||= sub { shift; $builder->_get_role($p, @_) }
+				unless exists &{$opts{'factory_package'}.'::get_role'};
 		}
 		$builder->$method_installer($opts{'factory_package'}, \%methods) if keys %methods;
 		
@@ -315,6 +319,68 @@ sub type_name {
 	$stub =~ s/^(main)?::// while $stub =~ /^(main)?::/;
 	$stub =~ s/::/_/g;
 	$stub;
+}
+
+sub _helper_for_get_class {
+	my $me  = shift;
+	my $pfx = shift;
+	
+	my @packages;
+	while ( @_ ) {
+		my $qname = $me->qualify_name( shift, $pfx );
+		push @packages, (
+			ref($_[0]) ? $qname->generate_package( shift->$_handle_list ) : $qname
+		);
+	}
+	
+	return @packages;
+}
+
+my %_anony_counter;
+sub _get_class {
+	my $me = shift;
+	my ($pfx) = @_;
+	my ($class, @roles) = $me->_helper_for_get_class( @_ );
+	
+	return make_absolute_package_name($class) unless @roles;
+	
+	no warnings qw( uninitialized numeric );
+	
+	my $new_class = $class->can('with_traits')
+		? $class->with_traits( @roles )
+		: $me->make_class(
+			make_absolute_package_name(
+				sprintf('%s::__WITH_TRAITS__::__GEN%06d__', $class, ++$_anony_counter{$class})
+			),
+			extends => make_absolute_package_name($class),
+			with    => [ map make_absolute_package_name($_), @roles ],
+			prefix  => do { no strict 'refs'; ${"$class\::PREFIX"} }  || $pfx,
+			factory => $class->FACTORY,
+			toolkit => do { no strict 'refs'; ${"$class\::TOOLKIT"} } || 'Moo',
+		);
+	
+	return make_absolute_package_name($new_class);
+}
+
+sub _get_role {
+	my $me = shift;
+	my ($pfx) = @_;
+	my (@roles) = $me->_helper_for_get_class( @_ );
+	
+	return make_absolute_package_name($roles[0]) if @roles==1;
+	
+	no warnings qw( uninitialized numeric );
+	
+	my $new_role = $me->make_role(
+		make_absolute_package_name(
+			sprintf('%s::__WITH_TRAITS__::__GEN%06d__', $roles[0], ++$_anony_counter{$roles[0]})
+		),
+		with    => [ map make_absolute_package_name($_), @roles ],
+		prefix  => do { no strict 'refs'; ${$roles[0]."::PREFIX"} }  || $pfx,
+		toolkit => do { no strict 'refs'; ${$roles[0]."::TOOLKIT"} } || 'Moo',
+	);
+	
+	return make_absolute_package_name($new_role);
 }
 
 sub croak {
