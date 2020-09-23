@@ -851,7 +851,7 @@ sub _make_package {
 	else {
 		if ($toolkit eq 'Moose' && !$opts{'mutable'}) {
 			require Moose::Util;
-			my %args = %{ $opts{'definition_content'} or {} };
+			my %args = %{ $opts{'definition_context'} or {} };
 			delete $args{'package'};
 			Moose::Util::find_meta($qname)->make_immutable(%args);
 		}
