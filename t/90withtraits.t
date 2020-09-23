@@ -16,10 +16,16 @@ my $app = app sub {
 	};
 };
 
+sub trimmit {
+	local $_ = shift;
+	s/^(main)?:://;
+	$_;
+}
+
 my $obj = $app->get_class("Thingy", "Foo" => [123], "Bar")->new;
 
 isa_ok( $obj, $app->get_class("Thingy"), '$obj' );
-ok( $obj->does(substr $app->get_role("Bar"), 2), '$obj->does(Bar)' );
+ok( $obj->does(trimmit $app->get_role("Bar")), '$obj->does(Bar)' );
 is( $obj->foo, 123, '$obj->foo' );
 is( $obj->bar, 456, '$obj->bar' );
 is( $obj->baz, 789, '$obj->baz' );
