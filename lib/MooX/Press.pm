@@ -851,7 +851,9 @@ sub _make_package {
 	else {
 		if ($toolkit eq 'Moose' && !$opts{'mutable'}) {
 			require Moose::Util;
-			Moose::Util::find_meta($qname)->make_immutable;
+			my %args = %{ $opts{'definition_content'} or {} };
+			delete $args{'package'};
+			Moose::Util::find_meta($qname)->make_immutable(%args);
 		}
 		
 		if ($toolkit eq 'Moo' && eval { require MooX::XSConstructor }) {
@@ -1177,7 +1179,7 @@ sub generate_package {
 	my %opts;
 	for my $key (qw/ extends with has can constant around before after
 		toolkit version authority mutable begin end requires import overload
-		before_apply after_apply multimethod /) {
+		before_apply after_apply multimethod definition_context /) {
 		if (exists $local_opts{$key}) {
 			$opts{$key} = delete $local_opts{$key};
 		}
@@ -1188,8 +1190,9 @@ sub generate_package {
 	}
 	
 	# must not generate types or factory methods
-	$opts{factory}   = undef;
-	$opts{type_name} = undef;
+	$opts{factory}      = undef;
+	$opts{multifactory} = undef;
+	$opts{type_name}    = undef;
 	
 	$_generate_counter{$generator_package} = 0 unless exists $_generate_counter{$generator_package};
 	my $qname = sprintf('%s::__GEN%06d__', $generator_package, ++$_generate_counter{$generator_package});
@@ -1523,7 +1526,9 @@ sub make_attribute_mouse {
 		$builder->_process_enum_mouse(@_);
 	}
 	require Mouse::Util;
-	(Mouse::Util::find_meta($class) or $class->meta)->add_attribute($attribute, %$spec);
+	my %spec = %$spec;
+	delete $spec{definition_context};
+	(Mouse::Util::find_meta($class) or $class->meta)->add_attribute($attribute, %spec);
 }
 
 sub _process_enum_mouse {

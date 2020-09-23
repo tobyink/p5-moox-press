@@ -65,6 +65,17 @@ sub _return_anon {
 	return;
 }
 
+sub _make_definition_context {
+	my $level = @_ ? shift : 1;
+	my ( $pkg, $file, $line ) = caller( $level );
+	return {
+		'package'  => $pkg,
+		'file'     => $file,
+		'line'     => $line,
+		'via'      => __PACKAGE__,
+	};
+}
+
 sub true  () { !!1 }
 sub false () { !!0 }
 
@@ -135,6 +146,8 @@ sub class {
 	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
 	my $name       = ( @_ % 2 ) ? _shift_type( Str|ScalarRef, @_ ) : undef;
 	my %args       = @_;
+	
+	$args{definition_content} ||= _make_definition_context(1);
 
 	my $kind =
 		$args{interface}   ? 'interface' :
@@ -492,6 +505,13 @@ sub has {
 	my $names = _shift_type( ArrayRef|ScalarRef|Str, @_ )
 		or confess("attributes cannot be anonymous");
 	my $spec  = @_ == 1 ? $_[0] : { @_ };
+	
+	if ( is_ArrayRef $spec ) {
+		unshift @$spec, definition_context => _make_definition_context(1);
+	}
+	elsif ( is_HashRef $spec ) {
+		$spec->{definition_context} ||= _make_definition_context(1);
+	}
 	
 	$names = [ $names ] unless is_ArrayRef $names;
 	push @{ $THIS{CLASS_SPEC}{has} ||= [] }, ( $_, $spec ) for @$names;
