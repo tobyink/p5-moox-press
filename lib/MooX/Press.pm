@@ -249,7 +249,7 @@ sub munge_options {
 	my $builder = shift;
 	my ($opts) = @_;
 	for my $key (sort keys %$opts) {
-		if ($key =~ /^(class|role|class_generator|role_generator):([^:].*)$/) {
+		if ($key =~ /^(class|role|class_generator|role_generator):((?:::)?[^:].*)$/) {
 			my ($kind, $pkg) = ($1, $2);
 			my $val = delete $opts->{$key};
 			if (ref $val) {
