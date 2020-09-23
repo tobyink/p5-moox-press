@@ -5,7 +5,7 @@ use warnings;
 package Zydeco::Lite;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.077';
+our $VERSION   = '0.078';
 
 use MooX::Press ();
 use Types::Standard qw( -types -is );

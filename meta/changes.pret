@@ -528,3 +528,9 @@
 	changeset [
 		item "Correct a couple of typos in code."^^Bugfix;
 	].
+
+`MooX-Press 0.078 cpan:TOBYINK`
+	issued  2020-09-23;
+	changeset [
+		item "Factories now have get_class() and get_role() methods."^^Addition;
+	].
