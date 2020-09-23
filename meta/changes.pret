@@ -519,6 +519,6 @@
 `MooX-Press 0.076 cpan:TOBYINK`
 	issued  2020-09-23;
 	changeset [
-		item "MooX::Press now supports a `definition_context` in class/role/attribute specs."^^Change;
-		item "Zydeco::Lite `class`, `role`, `interface`, `abstract_class`, and `has` keywords now include a `definition_context` in the specs they generate."^^Change;
+		item "MooX::Press now supports a `definition_context` in class/role/attribute/method specs."^^Change;
+		item "Zydeco::Lite `class`, `role`, `interface`, `abstract_class`, `has`, `method`, `factory`, `multi_method`, and `multi_factory` keywords now include a `definition_context` in the specs they generate."^^Change;
 	].

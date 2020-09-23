@@ -66,8 +66,22 @@ sub _return_anon {
 }
 
 sub _make_definition_context {
-	my $level = @_ ? shift : 1;
+	my ( $level, $coderef ) = @_;
+	
+	$level = 1 unless defined $level;
 	my ( $pkg, $file, $line ) = caller( $level );
+	
+	if ( defined $coderef ) {
+		require B;
+		my $b = B::svref_2object($coderef);
+		return {
+			'package'  => $pkg,
+			'file'     => $b->FILE || $b->START->file || $file,
+			'line'     => $b->START->line || $line,
+			'via'      => __PACKAGE__,
+		};
+	}
+	
 	return {
 		'package'  => $pkg,
 		'file'     => $file,
@@ -143,11 +157,12 @@ sub class {
 		};
 	}
 	
-	my $definition = _pop_type( CodeRef, @_ ) || sub { 1 };
+	my $dummy_dfn  = false;
+	my $definition = _pop_type( CodeRef, @_ ) || do { $dummy_dfn = true; sub { 1 } };
 	my $name       = ( @_ % 2 ) ? _shift_type( Str|ScalarRef, @_ ) : undef;
 	my %args       = @_;
 	
-	$args{definition_content} ||= _make_definition_context(1);
+	$args{definition_content} ||= _make_definition_context(1, $dummy_dfn ? () : $definition);
 
 	my $kind =
 		$args{interface}   ? 'interface' :
@@ -302,6 +317,7 @@ sub _method {
 		
 		if ( $sig or keys %args ) {
 			if ( defined $sig ) {
+				$args{definition_context} = _make_definition_context(1, $definition);
 				$args{caller}    = caller;
 				$args{code}      = $definition;
 				$args{signature} = $sig;
@@ -318,8 +334,9 @@ sub _method {
 		goto &_return_anon;
 	}
 	
-	$args{code}   = $definition;
+	$args{definition_context} = _make_definition_context(1, $definition);
 	$args{caller} = caller;
+	$args{code}   = $definition;
 	
 	if ( defined $sig ) {
 		$args{signature} = $sig;

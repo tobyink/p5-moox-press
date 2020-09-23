@@ -1707,7 +1707,7 @@ sub install_methods {
 	
 	for my $name (sort keys %$methods) {
 		no strict 'refs';
-		my ($code, $signature, $signature_style, $invocant_count, $is_coderef, $caller, $attrs, @curry);
+		my ($code, $signature, $signature_style, $invocant_count, $is_coderef, $caller, $attrs, @curry, $ctx);
 		$caller = $class;
 		
 		if (is_CodeRef($methods->{$name})) {
@@ -1725,6 +1725,7 @@ sub install_methods {
 				: ($methods->{$name}{named} ? 'named' : 'positional');
 			$is_coderef = !!$methods->{$name}{lexical};
 			$caller     = $methods->{$name}{caller};
+			$ctx = $methods->{$name}{'definition_context'};
 		}
 		
 		if ($signature) {
@@ -1754,20 +1755,26 @@ sub install_methods {
 		my $attrs_string = $is_coderef ? "" : ":method";
 		$attrs_string .= " :lvalue" if match("lvalue", $attrs);
 		
+		my $magic_comment = '';
+		if ($ctx) {
+			$magic_comment = sprintf("#line %d \"%s\"\n", $ctx->{line}, $ctx->{file});
+		}
+		
 		no warnings 'printf';
 		my $subcode = sprintf(
-			q{
-				package %-49s  # package name
-				%-49s          # my $check variable to close over
-				sub %-49s      # method name
-				{
-					%-49s          # strip @invocants from @_ if necessary
-					%-49s          # build $check
-					%-49s          # reassemble @_ from @invocants, @curry, and &$check
-					%-49s          # run sub code
-				};
-				%s
-			},
+			q{%s} .              # magic comment
+			q{package %-49s} .   # package name
+			q{%-49s} .           # my $check variable to close over
+			q{sub %-49s} .       # method name
+			q[{] .
+			q{%-49s} .           # strip @invocants from @_ if necessary
+			q{%-49s} .           # build $check
+			q{%-49s} .           # reassemble @_ from @invocants, @curry, and &$check
+			q{%-49s} .           # run sub code
+			q[};] .
+			q[%s]                # 1;
+			,
+			$magic_comment,
 			"$class;",
 			(($signature && !$optimized)
 				? 'my $check;'
