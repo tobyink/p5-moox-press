@@ -2276,6 +2276,9 @@ There will also be C<get_role> and C<get_class> methods:
   my $Pig    = MyApp->get_class( 'Pig', $Clever, $Brave );
   my $wilbur = $Pig->new( name => 'Wilbur' );
 
+Class generators and role generators are also allowed; just follow the name
+with an arrayref of parameters.
+
 The factory package will have a global variable C<< %PACKAGES >> where the
 keys are names of all the packages MooX::Press created for you, and the values
 are what kind of package they are:
