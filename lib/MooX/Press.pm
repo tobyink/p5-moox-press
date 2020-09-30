@@ -9,6 +9,7 @@ our $VERSION   = '0.078';
 
 use Types::Standard 1.010000 -is, -types;
 use Types::TypeTiny qw(ArrayLike HashLike);
+use Type::Registry ();
 use Exporter::Tiny qw(mkopt);
 use Import::Into;
 use match::simple qw(match);
