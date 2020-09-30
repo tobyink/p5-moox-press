@@ -534,3 +534,9 @@
 	changeset [
 		item "Factories now have get_class() and get_role() methods."^^Addition;
 	].
+
+`MooX-Press 0.079 cpan:TOBYINK`
+	issued  2020-09-30;
+	changeset [
+		item "Fix for Type::Registry->for_class being called before Type::Registry was loaded."^^Bugfix;
+	].
