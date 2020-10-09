@@ -540,3 +540,9 @@
 	changeset [
 		item "Fix for Type::Registry->for_class being called before Type::Registry was loaded."^^Bugfix;
 	].
+
+`MooX-Press 0.080 cpan:TOBYINK`
+	issued  2020-10-09;
+	changeset [
+		item "Support for Sub::MultiMethod 0.901+."^^Update;
+	].
