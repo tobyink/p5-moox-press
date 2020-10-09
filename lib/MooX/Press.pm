@@ -1698,7 +1698,7 @@ sub install_multimethod {
 	
 	my $_maybe_do_multimethods = sub {
 		my $tk = 'Sub::MultiMethod';
-		if ($tk->can('copy_package_candidates')) {
+		if ($tk->can('copy_package_candidates') and $tk->VERSION lt '0.901') {
 			my ($target, $kind, @sources) = @_;
 			$tk->copy_package_candidates(@sources => $target);
 			$tk->install_missing_dispatchers($target) unless $kind eq 'role';
