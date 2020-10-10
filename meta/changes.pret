@@ -546,3 +546,10 @@
 	changeset [
 		item "Support for Sub::MultiMethod 0.901+."^^Update;
 	].
+
+`MooX-Press 0.081 cpan:TOBYINK`
+	issued  2020-10-10;
+	changeset [
+		item "Support for Sub::SymMethod."^^Addition;
+		item "When MooX::Press attempts to build a child class before a parent class, it will now notice and hopefully build the parent class first."^^Change;
+	].
