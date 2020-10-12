@@ -569,7 +569,7 @@ sub constant {
 		( $THIS{CLASS_SPEC}{constant} ||= {} )->{$_} = $value for @$names;
 	}
 	else {
-		my $caller = caller;
+		my $caller = $THIS{APP} || caller;
 		my %constants;
 		$constants{$_} = $value for @$names;
 		'MooX::Press'->patch_package( $caller, constant => \%constants );
