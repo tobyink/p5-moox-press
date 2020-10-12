@@ -210,7 +210,8 @@ sub import {
 	}
 	
 	my %modifiers;
-	$opts{$_} && ($modifiers{$_} = delete $opts{$_}) for qw/ before after around /;
+	$opts{$_} && ($modifiers{$_} = delete $opts{$_})
+		for qw/ before after around can with constant symmethod multimethod extends /;
 	
 	for my $pkg (@roles) {
 		$builder->do_coercions_for_role($pkg->[0], %opts, reg => $reg, %{$pkg->[1]});
@@ -1034,10 +1035,15 @@ sub patch_package {
 	}
 
 	if ( $kind eq 'class' and my $extends = delete $spec{extends} ) {
-		my @isa    = $me->_expand_isa( $prefix, $extends );
-		if (@isa) {
+		my @isa = $me->_expand_isa( $prefix, $extends );
+		if ( $package->isa("$toolkit\::Object") ) {
 			my $method = "extend_class_" . lc $toolkit;
 			$me->$method( $package, \@isa );
+		}
+		else {
+			no strict 'refs';
+			no warnings 'once';
+			@{"$package\::ISA"} = @isa;
 		}
 	}
 
@@ -2458,6 +2464,11 @@ It is possible to write:
 
 This saves a level of indentation. (C<< => undef >> or C<< => 1 >> are
 supported as synonyms for C<< => {} >>.)
+
+The C<can>, C<before>, C<after>, C<around>, C<multimethod>, C<symmethod>,
+C<constant>, C<with>, and C<extends> options documented under Class Options
+can also be used as top-level import options to apply them to the factory
+package.
 
 =head3 Class Options
 
