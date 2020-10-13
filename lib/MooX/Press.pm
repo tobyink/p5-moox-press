@@ -1025,11 +1025,11 @@ sub patch_package {
 		do { no strict 'refs'; no warnings; ${"$package\::FACTORY"} };
 		
 	my $prefix =
-		exists($spec{'prefix'})             ? delete($spec{'prefix'}) :		
+		exists($spec{'prefix'})             ? delete($spec{'prefix'}) :
 		do { no strict 'refs'; no warnings; ${"$package\::PREFIX"} || $fp };
 
 	my $toolkit =
-		exists($spec{'toolkit'})            ? delete($spec{'toolkit'}) :		
+		exists($spec{'toolkit'})            ? delete($spec{'toolkit'}) :
 		do { no strict 'refs'; no warnings; ${"$package\::TOOLKIT"} || 'Moo' };
 	
 	if ( my $version = delete $spec{version} ) {
