@@ -234,7 +234,7 @@ sub import {
 	}
 	
 	if (keys %modifiers) {
-		$builder->patch_package( $opts{'factory_package'}, %modifiers );
+		$builder->patch_package( $opts{'factory_package'}, prefix => $opts{'prefix'}, %modifiers );
 	}
 	
 	%_cached_moo_helper = ();  # cleanups
@@ -1018,11 +1018,19 @@ sub patch_package {
 		? 'role'
 		: 'class';
 	delete $spec{is_role};
-	my $fp = $package->can('FACTORY')
-		? $package->FACTORY
-		: do { no strict 'refs'; ${"$package\::FACTORY"} };
-	my $prefix  = do { no strict 'refs'; ${"$package\::PREFIX"}  || $fp   };
-	my $toolkit = do { no strict 'refs'; ${"$package\::TOOLKIT"} || 'Moo' };
+	
+	my $fp =
+		exists($spec{'factory_package'})    ? delete($spec{'factory_package'}) :
+		$package->can('FACTORY')            ? $package->FACTORY : 
+		do { no strict 'refs'; no warnings; ${"$package\::FACTORY"} };
+		
+	my $prefix =
+		exists($spec{'prefix'})             ? delete($spec{'prefix'}) :		
+		do { no strict 'refs'; no warnings; ${"$package\::PREFIX"} || $fp };
+
+	my $toolkit =
+		exists($spec{'toolkit'})            ? delete($spec{'toolkit'}) :		
+		do { no strict 'refs'; no warnings; ${"$package\::TOOLKIT"} || 'Moo' };
 	
 	if ( my $version = delete $spec{version} ) {
 		no strict 'refs';
