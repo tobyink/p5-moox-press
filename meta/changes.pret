@@ -553,3 +553,9 @@
 		item "Support for Sub::SymMethod."^^Addition;
 		item "When MooX::Press attempts to build a child class before a parent class, it will now notice and hopefully build the parent class first."^^Change;
 	].
+
+`MooX-Press 0.082 cpan:TOBYINK`
+	issued  2020-10-13;
+	changeset [
+		item "Allow certain features previously only supported in classes and roles (`with`, `extends`, `can`, `constant`, `multimethod`, `symmethod`) to work for the factory itself."^^Change;
+	].
