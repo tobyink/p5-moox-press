@@ -1027,7 +1027,7 @@ sub patch_package {
 	my $prefix =
 		exists($spec{'prefix'})             ? delete($spec{'prefix'}) :
 		do { no strict 'refs'; no warnings; ${"$package\::PREFIX"} || $fp };
-
+	
 	my $toolkit =
 		exists($spec{'toolkit'})            ? delete($spec{'toolkit'}) :
 		do { no strict 'refs'; no warnings; ${"$package\::TOOLKIT"} || 'Moo' };
@@ -1041,7 +1041,7 @@ sub patch_package {
 		no strict 'refs';
 		${"$package\::AUTHORITY"} = $auth;
 	}
-
+	
 	if ( $kind eq 'class' and my $extends = delete $spec{extends} ) {
 		my @isa = $me->_expand_isa( $prefix, $extends );
 		if ( $package->isa("$toolkit\::Object") ) {
@@ -1054,7 +1054,7 @@ sub patch_package {
 			@{"$package\::ISA"} = @isa;
 		}
 	}
-
+	
 	if ( $kind eq 'class' and my $overload = delete $spec{overload} ) {
 		require overload;
 		require Import::Into;
