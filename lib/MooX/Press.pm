@@ -1021,7 +1021,7 @@ sub patch_package {
 	
 	my $fp =
 		exists($spec{'factory_package'})    ? delete($spec{'factory_package'}) :
-		$package->can('FACTORY')            ? $package->FACTORY : 
+		$package->can('FACTORY')            ? $package->FACTORY :
 		do { no strict 'refs'; no warnings; ${"$package\::FACTORY"} };
 		
 	my $prefix =
