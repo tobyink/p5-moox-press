@@ -1255,12 +1255,12 @@ means that the keyword may appear only within an app definition block.
    Optional[CodeRef]        $definition,
  );
  
- # Scope: CLASS
+ # Scope: CLASS or APP
  extends(
    List[Str|ArrayRef]       @parents,
  );
  
- # Scope: CLASS or ROLE
+ # Scope: ANY
  with(
    List[Str|ArrayRef]       @parents,
  );
