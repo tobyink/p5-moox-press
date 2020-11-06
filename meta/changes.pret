@@ -559,3 +559,9 @@
 	changeset [
 		item "Allow certain features previously only supported in classes and roles (`with`, `extends`, `can`, `constant`, `multimethod`, `symmethod`) to work for the factory itself."^^Change;
 	].
+
+`MooX-Press 0.083 cpan:TOBYINK`
+	issued  2020-11-06;
+	changeset [
+		item "Special support for default=>Ask::Q(...)"^^Update;
+	].
