@@ -10,10 +10,10 @@
 	:runtime-requirement    [ :on "namespace::autoclean"^^:CpanId ];
 	:runtime-requirement    [ :on "Moo 2.000000"^^:CpanId ];
 	:runtime-requirement    [ :on "MooX::Enumeration 0.010"^^:CpanId ];
-	:runtime-requirement    [ :on "Sub::HandlesVia 0.013"^^:CpanId ];
+	:runtime-requirement    [ :on "Sub::HandlesVia 0.025"^^:CpanId ];
 	:runtime-requirement    [ :on "Sub::MultiMethod 0.008"^^:CpanId ];
 	:runtime-requirement    [ :on "Sub::SymMethod 0.001"^^:CpanId ];
-	:runtime-requirement    [ :on "Lexical::Accessor 0.012"^^:CpanId ];
+	:runtime-requirement    [ :on "Lexical::Accessor 0.014"^^:CpanId ];
 	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
 	:runtime-requirement    [ :on "Role::Hooks 0.001"^^:CpanId ];
 	:runtime-recommendation [ :on "Moose 2.12"^^:CpanId ];
