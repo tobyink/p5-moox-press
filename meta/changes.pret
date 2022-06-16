@@ -565,3 +565,9 @@
 	changeset [
 		item "Special support for default=>Ask::Q(...)"^^Update;
 	].
+
+`MooX-Press 0.084 cpan:TOBYINK`
+	issued  2022-06-16;
+	changeset [
+		item "Raise the minimum versions of certain required dependencies."^^Packaging;
+	].
