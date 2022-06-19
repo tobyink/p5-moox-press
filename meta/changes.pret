@@ -571,3 +571,9 @@
 	changeset [
 		item "Raise the minimum versions of certain required dependencies."^^Packaging;
 	].
+
+`MooX-Press 0.085 cpan:TOBYINK`
+	issued  2022-06-19;
+	changeset [
+		item "Optimized signatures were sometimes causing a goto(HashRef) to happen."^^Bugfix;
+	].
