@@ -2029,8 +2029,8 @@ sub _optimize_signature {
 	my $details = $builder->_build_method_signature_check($method_class, $method_name, $signature_style, [$global_opts, @sig]);
 	return if keys %{$details->{environment}};
 	return if $details->{source} =~ /return/;
-	
-	$details->{source} =~ /^sub \{(.+)\};$/s or return;
+
+	$details->{source} =~ /^sub \{(.+)\};?$/s or return;
 	return "do { $1 }";
 }
 
