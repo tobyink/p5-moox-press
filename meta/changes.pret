@@ -577,3 +577,10 @@
 	changeset [
 		item "Optimized signatures were sometimes causing a goto(HashRef) to happen."^^Bugfix;
 	].
+
+`MooX-Press 0.086 cpan:TOBYINK`
+	issued  2022-07-19;
+	changeset [
+		item "Raise the minimum versions of certain required dependencies."^^Packaging;
+		item "Cope with changes to Slurpy in latest Type::Params/Types::Standard. This actually simplifies things."^^Update;
+	].
